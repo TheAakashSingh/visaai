@@ -1,0 +1,153 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: #0a0b0f;
+    --bg2: #0f1117;
+    --bg3: #151820;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --red: #e8372a;
+    --red2: #ff5a4e;
+    --red-dim: rgba(232,55,42,0.15);
+    --gold: #f5c842;
+    --green: #34d399;
+    --blue: #60a5fa;
+    --text: #f0f0f2;
+    --text2: #9298a8;
+    --text3: #5a6070;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+   font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+}
+
+@layer components {
+  .card {
+    @apply bg-bg2 border border-[rgba(255,255,255,0.07)] rounded-xl overflow-hidden;
+  }
+  .card-header {
+    @apply flex items-center justify-between px-5 py-4 border-b border-[rgba(255,255,255,0.07)];
+  }
+  .card-title {
+    @apply font-syne font-bold text-sm tracking-tight text-white;
+  }
+  .card-sub {
+    @apply text-xs text-[var(--text3)] mt-0.5;
+  }
+  .metric-card {
+    @apply card relative cursor-pointer transition-all duration-300 hover:-translate-y-0.5 hover:border-[rgba(255,255,255,0.12)];
+  }
+  .btn-primary {
+    @apply bg-[var(--red)] text-white font-dm font-semibold text-sm px-4 py-2 rounded-lg
+           hover:bg-[var(--red2)] active:scale-95 transition-all duration-200
+           shadow-[0_4px_16px_rgba(232,55,42,0.3)] hover:shadow-[0_6px_20px_rgba(232,55,42,0.4)]
+           flex items-center gap-2 border-none cursor-pointer;
+  }
+  .btn-outline {
+    @apply bg-transparent text-[var(--text2)] font-dm font-semibold text-sm px-4 py-2 rounded-lg
+           border border-[rgba(255,255,255,0.12)] hover:border-[var(--red)] hover:text-[var(--red2)]
+           transition-all duration-200 flex items-center gap-2 cursor-pointer;
+  }
+  .btn-ghost {
+    @apply bg-transparent text-[var(--text3)] hover:text-white transition-colors duration-200
+           flex items-center gap-1.5 text-sm cursor-pointer border-none;
+  }
+  .input {
+    @apply bg-bg3 border border-[rgba(255,255,255,0.07)] rounded-lg px-3.5 py-2.5
+           text-sm text-white font-dm placeholder:text-[var(--text3)]
+           focus:outline-none focus:border-[var(--red)] transition-colors duration-200;
+  }
+  .status-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-2.5 rounded-lg cursor-pointer text-sm
+           text-[var(--text2)] font-medium transition-all duration-200 mx-2 relative;
+  }
+  .nav-item:hover { @apply bg-white/5 text-white; }
+  .nav-item.active {
+    @apply bg-[rgba(232,55,42,0.15)] text-[var(--red2)] border border-[rgba(232,55,42,0.2)];
+  }
+  .page-enter {
+    @apply animate-fade-up;
+  }
+  .glow-red { box-shadow: 0 0 20px rgba(232,55,42,0.2); }
+  .text-gradient {
+    background: linear-gradient(135deg, #e8372a, #ff8c69);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+/* Framer Motion page transitions */
+.page-container {
+  animation: fadeUp 0.35s ease both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Skeleton loading */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg3) 25%, rgba(255,255,255,0.03) 50%, var(--bg3) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 6px;
+}
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Typing indicator */
+.typing-dot {
+  width: 6px; height: 6px;
+  background: var(--text3);
+  border-radius: 50%;
+  animation: typing 0.8s infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.15s; }
+.typing-dot:nth-child(3) { animation-delay: 0.3s; }
+@keyframes typing {
+  0%,100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* Voice wave */
+.voice-wave-bar {
+  background: var(--red);
+  border-radius: 2px;
+  animation: voiceWave 1.2s ease-in-out infinite;
+}
+@keyframes voiceWave {
+  0%,100% { height: 4px; }
+  50% { height: 28px; }
+}
+
+/* React Hot Toast overrides */
+.react-hot-toast {
+  background: var(--bg2) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border2) !important;
+}
