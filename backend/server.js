@@ -24,6 +24,7 @@ const settingsRoutes = require('./routes/settings');
 const knowledgeRoutes = require('./routes/knowledge');
 const webhookRoutes = require('./routes/webhooks');
 const crmRoutes = require('./routes/crm');
+const wevisaRoutes = require('./routes/wevisa'); // ← WeVisa platform
 
 const app = express();
 const server = http.createServer(app);
@@ -52,7 +53,7 @@ app.use(morgan('combined', { stream: { write: (msg) => logger.info(msg.trim()) }
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 min
+  windowMs: 15 * 60 * 1000,
   max: 200,
   message: { success: false, message: 'Too many requests, please try again later.' },
 });
@@ -62,7 +63,7 @@ app.use('/api/', limiter);
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Webhook routes (body parsers applied per-route inside webhooks.js)
+// Webhook routes
 app.use('/webhooks', webhookRoutes);
 
 // ===== ROUTES =====
@@ -75,15 +76,11 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/knowledge', knowledgeRoutes);
 app.use('/api/crm', crmRoutes);
+app.use('/api/wevisa', wevisaRoutes); // ← WeVisa B2B Platform
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    version: '1.0.0',
-  });
+  res.json({ status: 'ok', timestamp: new Date().toISOString(), uptime: process.uptime(), version: '1.0.0' });
 });
 
 // 404 handler

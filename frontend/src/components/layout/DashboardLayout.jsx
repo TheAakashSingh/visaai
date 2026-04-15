@@ -14,6 +14,9 @@ import { getSocket } from '@/services/socket'
 const NAV = [
   { path: '/', label: 'Dashboard', icon: '⚡', exact: true },
   { path: '/leads', label: 'Leads', icon: '👥', badge: 'leads' },
+  { path: '/deals', label: 'Deals', icon: '💼' },
+  { path: '/calendar', label: 'Calendar', icon: '📅' },
+  { path: '/contacts', label: 'Contacts', icon: '📒' },
   { path: '/crm', label: 'CRM Integration', icon: '🔗' },
   { path: '/chatbot', label: 'WhatsApp Bot', icon: '💬', badge: 'live' },
   { path: '/voice', label: 'Voice Bot', icon: '📞' },
