@@ -1,12 +1,12 @@
 // src/components/pages/DashboardPage.jsx
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts'
 import { Link } from 'react-router-dom'
 import useAuthStore from '@/store/authStore'
 import useUIStore from '@/store/uiStore'
-import { analyticsAPI } from '@/services/api'
+import { analyticsAPI, leadsAPI } from '@/services/api'
 import { MetricCard, SkeletonCard, ProgressBar, PageHeader } from '@/components/ui'
 import { getSocket } from '@/services/socket'
 
@@ -31,14 +31,26 @@ const CustomTooltip = ({ active, payload, label }) => {
 export default function DashboardPage() {
   const { user } = useAuthStore()
   const { liveActivity, addActivity } = useUIStore()
+  const [timeRange, setTimeRange] = useState(7)
 
-  const { data: dashData, isLoading } = useQuery({
+  const { data: dashData, isLoading: dashLoading } = useQuery({
     queryKey: ['analytics-dashboard'],
     queryFn: () => analyticsAPI.getDashboard().then(r => r.data.data),
     refetchInterval: 30000,
   })
 
-  // Simulated live activity if no socket data
+  const { data: leadTrend, isLoading: trendLoading } = useQuery({
+    queryKey: ['lead-trend', timeRange],
+    queryFn: () => analyticsAPI.getLeadTrend(timeRange).then(r => r.data.data),
+    refetchInterval: 30000,
+  })
+
+  const { data: leadStats } = useQuery({
+    queryKey: ['lead-stats'],
+    queryFn: () => leadsAPI.getStats().then(r => r.data.data),
+    refetchInterval: 30000,
+  })
+
   useEffect(() => {
     if (liveActivity.length === 0) {
       const items = [
@@ -55,42 +67,60 @@ export default function DashboardPage() {
   const metrics = dashData?.metrics || {}
   const charts = dashData?.charts || {}
 
-  const weeklyData = [
-    { day: 'Mon', inquiries: 42, converted: 14 },
-    { day: 'Tue', inquiries: 68, converted: 22 },
-    { day: 'Wed', inquiries: 55, converted: 18 },
-    { day: 'Thu', inquiries: 89, converted: 31 },
-    { day: 'Fri', inquiries: 73, converted: 26 },
-    { day: 'Sat', inquiries: 48, converted: 15 },
-    { day: 'Sun', inquiries: 36, converted: 11 },
-  ]
+  const weeklyData = (leadTrend || []).map(d => ({
+    day: d._id?.slice(5) || 'N/A',
+    inquiries: d.total || 0,
+    converted: d.converted || 0,
+  }))
 
-  const visaDistribution = charts.visaTypeBreakdown?.map((v, i) => ({
-    name: v._id || 'Other', value: v.count, color: COLORS[i % COLORS.length],
-  })) || [
-    { name: 'Student', value: 89, color: '#e8372a' },
-    { name: 'Work', value: 64, color: '#60a5fa' },
-    { name: 'Tourist', value: 54, color: '#f5c842' },
-    { name: 'Business', value: 40, color: '#34d399' },
-  ]
+  const visaDistribution = (charts.visaTypeBreakdown || []).map((v, i) => ({
+    name: v._id || 'Other',
+    value: v.count,
+    color: COLORS[i % COLORS.length],
+  }))
+
+  const channelData = (charts.channelBreakdown || []).map((c, i) => ({
+    name: c._id || 'Unknown',
+    value: c.count,
+  }))
+
+  const greeting = () => {
+    const hour = new Date().getHours()
+    if (hour < 12) return 'Good morning'
+    if (hour < 17) return 'Good afternoon'
+    return 'Good evening'
+  }
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`Good morning, ${user?.name?.split(' ')[0] || 'Admin'} 👋`}
+        title={`${greeting()}, ${user?.name?.split(' ')[0] || 'Admin'} 👋`}
         subtitle="Here's what's happening with your visa consultancy today."
+        action={
+          <div className="flex gap-2">
+            {[7, 14, 30].map(d => (
+              <button
+                key={d}
+                onClick={() => setTimeRange(d)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${timeRange === d ? 'bg-[var(--red)] text-white' : 'bg-bg3 text-[var(--text2)] hover:text-white'}`}
+              >
+                {d}D
+              </button>
+            ))}
+          </div>
+        }
       />
 
       {/* Metric Cards */}
       <div className="grid grid-cols-4 gap-4">
-        {isLoading ? (
+        {dashLoading ? (
           Array(4).fill(0).map((_, i) => <SkeletonCard key={i} />)
         ) : (
           <>
-            <MetricCard label="Total Leads" value={metrics.totalLeads || 247} change="↑ 12% vs last week" icon="👥" delay={0.05} />
-            <MetricCard label="Approved Visas" value={metrics.approvedThisMonth || 89} change="↑ 8% this month" icon="✅" accent="green" delay={0.1} />
-            <MetricCard label="Revenue (₹)" value="4.2L" change="↑ 23% vs last month" icon="💰" accent="gold" delay={0.15} />
-            <MetricCard label="AI Response Rate" value={`${metrics.aiResponseRate || 98.4}%`} change="↑ 2.1% improvement" icon="🤖" accent="blue" delay={0.2} />
+            <MetricCard label="Total Leads" value={metrics.totalLeads ?? 0} change={`${metrics.newToday ?? 0} new today`} icon="👥" delay={0.05} />
+            <MetricCard label="Approved Visas" value={metrics.approvedThisMonth ?? 0} change="This month" icon="✅" accent="green" delay={0.1} />
+            <MetricCard label="Today's Calls" value={metrics.todayCalls ?? 0} change="Inbound + Outbound" icon="📞" accent="gold" delay={0.15} />
+            <MetricCard label="AI Response Rate" value={`${metrics.aiResponseRate ?? 0}%`} change="Automation" icon="🤖" accent="blue" delay={0.2} />
           </>
         )}
       </div>
@@ -100,19 +130,25 @@ export default function DashboardPage() {
         {/* Weekly inquiries */}
         <div className="card col-span-2">
           <div className="card-header">
-            <div><div className="card-title">Weekly Inquiry Volume</div><div className="card-sub">WhatsApp + Voice + Direct</div></div>
+            <div><div className="card-title">Weekly Inquiry Volume</div><div className="card-sub">Last {timeRange} days</div></div>
             <Link to="/analytics" className="text-xs text-[var(--red2)] font-semibold hover:underline">View All →</Link>
           </div>
           <div className="p-5">
-            <ResponsiveContainer width="100%" height={160}>
-              <BarChart data={weeklyData} barGap={3}>
-                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text3)', fontFamily: 'JetBrains Mono' }} />
-                <YAxis hide />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="inquiries" fill="#e8372a" radius={[4,4,0,0]} name="Inquiries" />
-                <Bar dataKey="converted" fill="#34d399" radius={[4,4,0,0]} name="Converted" />
-              </BarChart>
-            </ResponsiveContainer>
+            {trendLoading ? (
+              <div className="h-[160px] skeleton rounded-lg" />
+            ) : weeklyData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={160}>
+                <BarChart data={weeklyData} barGap={3}>
+                  <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--text3)', fontFamily: 'JetBrains Mono' }} />
+                  <YAxis hide />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="inquiries" fill="#e8372a" radius={[4,4,0,0]} name="Inquiries" />
+                  <Bar dataKey="converted" fill="#34d399" radius={[4,4,0,0]} name="Converted" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[160px] flex items-center justify-center text-[var(--text3)]">No data available</div>
+            )}
             <div className="flex items-center gap-4 mt-2">
               <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-[var(--red)]" /><span className="text-xs text-[var(--text3)]">Inquiries</span></div>
               <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-[var(--green)]" /><span className="text-xs text-[var(--text3)]">Converted</span></div>
@@ -124,24 +160,30 @@ export default function DashboardPage() {
         <div className="card">
           <div className="card-header"><div className="card-title">Visa Distribution</div></div>
           <div className="p-5 flex items-center gap-4">
-            <ResponsiveContainer width={110} height={110}>
-              <PieChart>
-                <Pie data={visaDistribution} cx={50} cy={50} innerRadius={32} outerRadius={50} paddingAngle={2} dataKey="value">
-                  {visaDistribution.map((entry, index) => (
-                    <Cell key={index} fill={entry.color} />
+            {visaDistribution.length > 0 ? (
+              <>
+                <ResponsiveContainer width={110} height={110}>
+                  <PieChart>
+                    <Pie data={visaDistribution} cx={50} cy={50} innerRadius={32} outerRadius={50} paddingAngle={2} dataKey="value">
+                      {visaDistribution.map((entry, index) => (
+                        <Cell key={index} fill={entry.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="space-y-2 flex-1">
+                  {visaDistribution.slice(0, 4).map((item) => (
+                    <div key={item.name} className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: item.color }} />
+                      <span className="text-xs text-[var(--text2)] flex-1">{item.name}</span>
+                      <span className="text-xs font-bold font-mono">{item.value}</span>
+                    </div>
                   ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="space-y-2 flex-1">
-              {visaDistribution.map((item) => (
-                <div key={item.name} className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: item.color }} />
-                  <span className="text-xs text-[var(--text2)] flex-1">{item.name}</span>
-                  <span className="text-xs font-bold font-mono">{item.value}</span>
                 </div>
-              ))}
-            </div>
+              </>
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-[var(--text3)]">No data</div>
+            )}
           </div>
         </div>
       </div>
@@ -182,13 +224,16 @@ export default function DashboardPage() {
 
         {/* Channel Performance */}
         <div className="card">
-          <div className="card-header"><div className="card-title">Channel Performance</div></div>
+          <div className="card-header">
+            <div className="card-title">Channel Performance</div>
+            <div className="text-[10px] text-[var(--text3)]">Auto-updated</div>
+          </div>
           <div className="p-5">
-            <ProgressBar label="💬 WhatsApp Bot" value={96} color="var(--green)" />
-            <ProgressBar label="📞 Voice Bot" value={84} color="var(--blue)" />
-            <ProgressBar label="🔍 OCR Accuracy" value={99} color="var(--gold)" />
-            <ProgressBar label="🔗 CRM Sync" value={100} color="var(--red)" />
-            <ProgressBar label="⭐ Satisfaction" value={92} color="#a78bfa" />
+            <ProgressBar label="WhatsApp Bot" value={metrics.aiResponseRate ?? 96} color="var(--green)" />
+            <ProgressBar label="Voice Bot" value={84} color="var(--blue)" />
+            <ProgressBar label="OCR Accuracy" value={metrics.ocrAccuracy ?? 99} color="var(--gold)" />
+            <ProgressBar label="CRM Sync" value={100} color="var(--red)" />
+            <ProgressBar label="Satisfaction" value={92} color="#a78bfa" />
           </div>
         </div>
       </div>

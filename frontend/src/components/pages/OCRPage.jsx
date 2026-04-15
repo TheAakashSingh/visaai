@@ -4,18 +4,30 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useDropzone } from 'react-dropzone'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
-import { ocrAPI } from '@/services/api'
-import { MetricCard, PageHeader, StatusBadge, Spinner } from '@/components/ui'
+import { ocrAPI, leadsAPI } from '@/services/api'
+import { MetricCard, PageHeader, StatusBadge, Spinner, EmptyState } from '@/components/ui'
 
 export default function OCRPage() {
   const qc = useQueryClient()
   const [ocrResult, setOcrResult] = useState(null)
   const [selectedLeadId, setSelectedLeadId] = useState('')
 
-  const { data: statsData } = useQuery({ queryKey: ['ocr-stats'], queryFn: () => ocrAPI.getStats().then(r => r.data.data) })
-  const { data: docsData, isLoading: docsLoading } = useQuery({ queryKey: ['ocr-documents'], queryFn: () => ocrAPI.getDocuments({ limit: 15 }).then(r => r.data) })
+  const { data: statsData, isLoading: statsLoading } = useQuery({ 
+    queryKey: ['ocr-stats'], 
+    queryFn: () => ocrAPI.getStats().then(r => r.data.data) 
+  })
+  const { data: docsData, isLoading: docsLoading } = useQuery({ 
+    queryKey: ['ocr-documents'], 
+    queryFn: () => ocrAPI.getDocuments({ limit: 15 }).then(r => r.data) 
+  })
+  const { data: leadsData } = useQuery({
+    queryKey: ['leads-list'],
+    queryFn: () => leadsAPI.getAll({ limit: 100 }).then(r => r.data)
+  })
+  
   const docs = docsData?.data || []
   const stats = statsData || {}
+  const leads = leadsData?.data || []
 
   const processMut = useMutation({
     mutationFn: ({ file, leadId }) => {
@@ -49,16 +61,29 @@ export default function OCRPage() {
     <div className="space-y-6">
       <PageHeader title="Smart Document OCR" subtitle="AI-powered optical character recognition for passports & visa documents." />
       <div className="grid grid-cols-4 gap-4">
-        <MetricCard label="Docs Processed" value={stats.total || 1893} change="All time" icon="📄" delay={0.05} />
-        <MetricCard label="Accuracy Rate" value={`${stats.accuracyRate || 99.2}%`} change="Google Vision" icon="🎯" accent="green" delay={0.1} />
-        <MetricCard label="Avg Process Time" value={`${stats.avgProcessTime || 1.4}s`} change="Per document" icon="⚡" accent="gold" delay={0.15} />
-        <MetricCard label="Passports Read" value={stats.passports || 1204} change="Successfully" icon="🛂" accent="blue" delay={0.2} />
+        {statsLoading ? (
+          Array(4).fill(0).map((_, i) => <div key={i} className="skeleton h-24 rounded-xl" />)
+        ) : (
+          <>
+            <MetricCard label="Docs Processed" value={stats.total ?? 0} change="All time" icon="📄" delay={0.05} />
+            <MetricCard label="Accuracy Rate" value={`${stats.accuracyRate ?? 0}%`} change="Google Vision" icon="🎯" accent="green" delay={0.1} />
+            <MetricCard label="Avg Process Time" value={`${stats.avgProcessTime ?? 0}s`} change="Per document" icon="⚡" accent="gold" delay={0.15} />
+            <MetricCard label="Passports Read" value={stats.passports ?? 0} change="Successfully" icon="🛂" accent="blue" delay={0.2} />
+          </>
+        )}
       </div>
       <div className="grid grid-cols-2 gap-4">
         {/* Upload */}
         <div className="card">
-          <div className="card-header"><div className="card-title">📁 Document Processor</div><div className="card-sub">Google Vision API + Tesseract</div></div>
+          <div className="card-header"><div className="card-title">📁 Document Processor</div><div className="card-sub">Google Vision API + AI</div></div>
           <div className="p-5 space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-[var(--text2)] uppercase tracking-wider mb-1.5">Link to Lead (optional)</label>
+              <select className="input w-full" value={selectedLeadId} onChange={e => setSelectedLeadId(e.target.value)}>
+                <option value="">-- No lead selected --</option>
+                {leads.map(l => <option key={l._id} value={l._id}>{l.name} — {l.phone}</option>)}
+              </select>
+            </div>
             <div
               {...getRootProps()}
               className={`border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all duration-200 ${isDragActive ? 'border-[var(--red)] bg-[rgba(232,55,42,0.05)]' : 'border-[rgba(255,255,255,0.12)] hover:border-[var(--red)] hover:bg-[rgba(232,55,42,0.03)]'}`}
@@ -84,7 +109,7 @@ export default function OCRPage() {
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="bg-bg3 rounded-xl border border-[rgba(255,255,255,0.07)] overflow-hidden">
                   <div className="px-4 py-2.5 border-b border-[rgba(255,255,255,0.07)] flex items-center justify-between">
                     <span className="text-xs font-semibold text-green-400">✅ Extracted Data — {ocrResult?.document?.type || 'Document'}</span>
-                    <span className="text-[10px] text-[var(--text3)] font-mono">Confidence: {(ocr.confidence * 100).toFixed(0)}%</span>
+                    <span className="text-[10px] text-[var(--text3)] font-mono">Confidence: {ocr.confidence ? (ocr.confidence * 100).toFixed(0) : 0}%</span>
                   </div>
                   <div className="p-4 font-mono text-[11px] leading-relaxed space-y-1">
                     {[['Full Name', ocr.full_name],['Date of Birth', ocr.date_of_birth],['Document No', ocr.document_number],['Issue Date', ocr.issue_date],['Expiry Date', ocr.expiry_date],['Nationality', ocr.nationality],['Gender', ocr.gender],['Place of Issue', ocr.place_of_issue]].filter(([,v]) => v).map(([k,v]) => (
@@ -112,12 +137,12 @@ export default function OCRPage() {
 
         {/* Recent Documents */}
         <div className="card">
-          <div className="card-header"><div className="card-title">📋 Processed Documents</div></div>
+          <div className="card-header"><div className="card-title">📋 Processed Documents</div><div className="card-sub">{docs.length} documents</div></div>
           <div className="divide-y divide-[rgba(255,255,255,0.05)]">
             {docsLoading ? Array(8).fill(0).map((_, i) => (
               <div key={i} className="flex items-center gap-3 px-5 py-3.5"><div className="skeleton h-4 w-full" /></div>
             )) : docs.length === 0 ? (
-              <div className="px-5 py-8 text-center text-sm text-[var(--text3)]">No documents processed yet</div>
+              <EmptyState icon="📄" title="No documents yet" description="Upload a passport or document to get started" />
             ) : docs.map((doc, i) => (
               <motion.div key={doc._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
                 className="flex items-center gap-3 px-5 py-3.5 hover:bg-white/[0.02] transition-colors">

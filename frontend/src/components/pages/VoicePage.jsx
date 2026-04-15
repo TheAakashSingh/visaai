@@ -20,9 +20,20 @@ export default function VoicePage() {
   const [callForm, setCallForm] = useState({ leadId: '', phone: '', scriptType: 'general', appointmentDate: '', appointmentTime: '', statusMessage: '' })
   const [activeTab, setActiveTab] = useState('logs')
 
-  const { data: stats } = useQuery({ queryKey: ['voice-stats'], queryFn: () => voiceAPI.getStats().then(r => r.data.data), refetchInterval: 15000 })
-  const { data: logsData, isLoading } = useQuery({ queryKey: ['call-logs'], queryFn: () => voiceAPI.getLogs({ limit: 30 }).then(r => r.data), refetchInterval: 15000 })
-  const { data: leadsData } = useQuery({ queryKey: ['leads-for-voice'], queryFn: () => leadsAPI.getAll({ limit: 100 }).then(r => r.data) })
+  const { data: stats, isLoading: statsLoading } = useQuery({ 
+    queryKey: ['voice-stats'], 
+    queryFn: () => voiceAPI.getStats().then(r => r.data.data), 
+    refetchInterval: 15000 
+  })
+  const { data: logsData, isLoading } = useQuery({ 
+    queryKey: ['call-logs'], 
+    queryFn: () => voiceAPI.getLogs({ limit: 30 }).then(r => r.data), 
+    refetchInterval: 15000 
+  })
+  const { data: leadsData } = useQuery({ 
+    queryKey: ['leads-for-voice'], 
+    queryFn: () => leadsAPI.getAll({ limit: 100 }).then(r => r.data) 
+  })
 
   const calls = logsData?.data || []
   const leads = leadsData?.data || []
@@ -55,10 +66,16 @@ export default function VoicePage() {
       <PageHeader title="AI Voice Bot" subtitle="Inbound & outbound AI voice calls — appointments, status updates, surveys, re-engagement." action={<button className="btn-primary" onClick={() => setCallModal(true)}>📞 Initiate Call</button>} />
 
       <div className="grid grid-cols-4 gap-4">
-        <MetricCard label="Calls Today" value={stats?.todayCalls ?? 84} change={`${stats?.inboundToday ?? 53} inbound`} icon="📞" delay={0.05} />
-        <MetricCard label="Avg Duration" value={stats?.avgDuration ?? '3:42'} change="Min:Sec" icon="⏱" accent="green" delay={0.1} />
-        <MetricCard label="Outbound" value={stats?.outboundToday ?? 31} change="Follow-ups sent" icon="📤" accent="gold" delay={0.15} />
-        <MetricCard label="Dormant Leads" value={dormantLeads.length} change="Need re-engagement" icon="🔄" accent="blue" delay={0.2} />
+        {statsLoading ? (
+          Array(4).fill(0).map((_, i) => <div key={i} className="skeleton h-24 rounded-xl" />)
+        ) : (
+          <>
+            <MetricCard label="Calls Today" value={stats?.todayCalls ?? 0} change={`${stats?.inboundToday ?? 0} inbound`} icon="📞" delay={0.05} />
+            <MetricCard label="Avg Duration" value={stats?.avgDuration ?? '0:00'} change="Min:Sec" icon="⏱" accent="green" delay={0.1} />
+            <MetricCard label="Outbound" value={stats?.outboundToday ?? 0} change="Follow-ups sent" icon="📤" accent="gold" delay={0.15} />
+            <MetricCard label="Dormant Leads" value={dormantLeads.length} change="Need re-engagement" icon="🔄" accent="blue" delay={0.2} />
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-3 gap-4">
@@ -70,24 +87,18 @@ export default function VoicePage() {
             </div>
           </div>
           <div className="p-5 space-y-4">
-            <div className="p-4 bg-bg3 rounded-xl border border-[rgba(255,255,255,0.07)]">
-              <div className="flex justify-between mb-3">
-                <span className="text-xs font-semibold text-green-400">🟢 INBOUND — Priya Sharma</span>
-                <span className="text-xs font-mono text-[var(--text3)]">02:14</span>
-              </div>
-              <div className="flex items-center gap-0.5 h-10">
-                {Array(24).fill(0).map((_, i) => (
-                  <div key={i} className="voice-wave-bar flex-1 rounded-sm" style={{ animationDelay: `${i * 0.05}s`, minHeight: 4 }} />
+            {stats ? (
+              <>
+                {[['Inbound Today', stats.inboundToday ?? 0], ['Outbound Today', stats.outboundToday ?? 0], ['Transferred to Agent', stats.transferred ?? 0], ['CRM Records', stats.totalCalls ?? 0]].map(([k, v]) => (
+                  <div key={k} className="flex justify-between py-2.5 border-b border-[rgba(255,255,255,0.05)] last:border-0">
+                    <span className="text-xs text-[var(--text2)]">{k}</span>
+                    <span className="text-sm font-bold font-mono">{v}</span>
+                  </div>
                 ))}
-              </div>
-              <div className="text-[11px] text-[var(--text3)] mt-2">"...Canada student visa ke baare mein..."</div>
-            </div>
-            {[['Inbound Today', stats?.inboundToday ?? 53], ['Outbound Today', stats?.outboundToday ?? 31], ['Transferred to Agent', 8], ['CRM Records', stats?.todayCalls ?? 84]].map(([k, v]) => (
-              <div key={k} className="flex justify-between py-2.5 border-b border-[rgba(255,255,255,0.05)] last:border-0">
-                <span className="text-xs text-[var(--text2)]">{k}</span>
-                <span className="text-sm font-bold font-mono">{v}</span>
-              </div>
-            ))}
+              </>
+            ) : (
+              <div className="text-center py-4 text-[var(--text3)]">Loading stats...</div>
+            )}
           </div>
         </div>
 
