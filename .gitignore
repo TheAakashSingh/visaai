@@ -106,7 +106,7 @@ dist
 
 # Docusaurus cache and generated files
 .docusaurus
-
+docker-compose.yml
 # Serverless directories
 .serverless/
 

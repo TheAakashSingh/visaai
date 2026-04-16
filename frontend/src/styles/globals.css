@@ -21,13 +21,13 @@
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
   html { scroll-behavior: smooth; }
 
+  /* VisaAI Pro dark body default */
   body {
     background: var(--bg);
     color: var(--text);
-   font-family: 'Inter', sans-serif;
+    font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
@@ -39,22 +39,75 @@
   ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 }
 
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   WeVisa light-theme scope — fixes all input text visibility
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.wv-root {
+  color: #1f2937;
+  background-color: #f9fafb;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ---- ALL inputs/selects/textareas inside .wv-root ---- */
+.wv-root input,
+.wv-root input[type="text"],
+.wv-root input[type="email"],
+.wv-root input[type="password"],
+.wv-root input[type="tel"],
+.wv-root input[type="number"],
+.wv-root input[type="date"],
+.wv-root input[type="search"],
+.wv-root textarea,
+.wv-root select {
+  color: #1f2937 !important;
+  background-color: #f9fafb !important;
+  caret-color: #1f2937 !important;
+}
+
+.wv-root input::placeholder,
+.wv-root textarea::placeholder {
+  color: #9ca3af !important;
+  opacity: 1;
+}
+
+.wv-root input:focus,
+.wv-root textarea:focus,
+.wv-root select:focus {
+  color: #1f2937 !important;
+  background-color: #ffffff !important;
+  outline: none;
+}
+
+.wv-root select option {
+  color: #1f2937;
+  background-color: #ffffff;
+}
+
+/* autofill override */
+.wv-root input:-webkit-autofill,
+.wv-root input:-webkit-autofill:hover,
+.wv-root input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #1f2937 !important;
+  -webkit-box-shadow: 0 0 0px 1000px #f9fafb inset !important;
+  box-shadow: 0 0 0px 1000px #f9fafb inset !important;
+}
+
+/* headings & paragraphs inside wv-root */
+.wv-root h1, .wv-root h2, .wv-root h3, .wv-root h4, .wv-root h5 {
+  color: #111827;
+}
+.wv-root p {
+  color: inherit;
+}
+
 @layer components {
-  .card {
-    @apply bg-bg2 border border-[rgba(255,255,255,0.07)] rounded-xl overflow-hidden;
-  }
-  .card-header {
-    @apply flex items-center justify-between px-5 py-4 border-b border-[rgba(255,255,255,0.07)];
-  }
-  .card-title {
-    @apply font-syne font-bold text-sm tracking-tight text-white;
-  }
-  .card-sub {
-    @apply text-xs text-[var(--text3)] mt-0.5;
-  }
-  .metric-card {
-    @apply card relative cursor-pointer transition-all duration-300 hover:-translate-y-0.5 hover:border-[rgba(255,255,255,0.12)];
-  }
+  /* ── VisaAI Pro dark theme ── */
+  .card { @apply bg-bg2 border border-[rgba(255,255,255,0.07)] rounded-xl overflow-hidden; }
+  .card-header { @apply flex items-center justify-between px-5 py-4 border-b border-[rgba(255,255,255,0.07)]; }
+  .card-title  { @apply font-syne font-bold text-sm tracking-tight text-white; }
+  .card-sub    { @apply text-xs text-[var(--text3)] mt-0.5; }
+  .metric-card { @apply card relative cursor-pointer transition-all duration-300 hover:-translate-y-0.5 hover:border-[rgba(255,255,255,0.12)]; }
+
   .btn-primary {
     @apply bg-[var(--red)] text-white font-dm font-semibold text-sm px-4 py-2 rounded-lg
            hover:bg-[var(--red2)] active:scale-95 transition-all duration-200
@@ -75,79 +128,85 @@
            text-sm text-white font-dm placeholder:text-[var(--text3)]
            focus:outline-none focus:border-[var(--red)] transition-colors duration-200;
   }
-  .status-badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
-  }
+  .status-badge { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold; }
   .nav-item {
     @apply flex items-center gap-3 px-4 py-2.5 rounded-lg cursor-pointer text-sm
            text-[var(--text2)] font-medium transition-all duration-200 mx-2 relative;
   }
-  .nav-item:hover { @apply bg-white/5 text-white; }
-  .nav-item.active {
-    @apply bg-[rgba(232,55,42,0.15)] text-[var(--red2)] border border-[rgba(232,55,42,0.2)];
-  }
-  .page-enter {
-    @apply animate-fade-up;
-  }
-  .glow-red { box-shadow: 0 0 20px rgba(232,55,42,0.2); }
+  .nav-item:hover  { @apply bg-white/5 text-white; }
+  .nav-item.active { @apply bg-[rgba(232,55,42,0.15)] text-[var(--red2)] border border-[rgba(232,55,42,0.2)]; }
+  .glow-red  { box-shadow: 0 0 20px rgba(232,55,42,0.2); }
   .text-gradient {
     background: linear-gradient(135deg, #e8372a, #ff8c69);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
+  /* ── WeVisa light theme utility classes ── */
+  .wv-input {
+    @apply w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-800 text-sm
+           bg-gray-50 placeholder:text-gray-400
+           focus:outline-none focus:border-blue-500 focus:bg-white transition-colors;
+  }
+  .wv-input-sm {
+    @apply w-full px-3 py-2.5 rounded-xl border border-gray-200 text-gray-800 text-sm
+           bg-gray-50 placeholder:text-gray-400
+           focus:outline-none focus:border-blue-500 focus:bg-white transition-colors;
+  }
+  .wv-select {
+    @apply w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-800 text-sm
+           bg-gray-50 focus:outline-none focus:border-blue-500 focus:bg-white
+           transition-colors cursor-pointer;
+  }
+  .wv-textarea {
+    @apply w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-800 text-sm
+           bg-gray-50 placeholder:text-gray-400
+           focus:outline-none focus:border-blue-500 focus:bg-white
+           transition-colors resize-none;
+  }
+  .wv-label  { @apply block text-xs font-bold text-gray-600 mb-1.5; }
+  .wv-card   { @apply bg-white rounded-2xl border border-gray-100 shadow-sm; }
+  .wv-btn    { @apply px-5 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-sm hover:bg-blue-700 active:scale-95 transition-all shadow cursor-pointer border-0; }
+  .wv-btn-outline { @apply px-5 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-semibold text-sm hover:border-blue-400 hover:text-blue-600 transition-all cursor-pointer bg-white; }
 }
 
-/* Framer Motion page transitions */
-.page-container {
-  animation: fadeUp 0.35s ease both;
-}
-
+/* ── Animations ── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes skeleton-loading {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes typing {
+  0%,100% { opacity: 0.3; transform: scale(1); }
+  50%     { opacity: 1;   transform: scale(1.2); }
+}
+@keyframes voiceWave {
+  0%,100% { height: 4px; }
+  50%     { height: 28px; }
+}
+@keyframes pulse-dot {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50%     { opacity: 0.5; transform: scale(1.3); }
 }
 
-/* Skeleton loading */
 .skeleton {
   background: linear-gradient(90deg, var(--bg3) 25%, rgba(255,255,255,0.03) 50%, var(--bg3) 75%);
   background-size: 200% 100%;
   animation: skeleton-loading 1.5s infinite;
   border-radius: 6px;
 }
-@keyframes skeleton-loading {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+.wv-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 8px;
 }
-
-/* Typing indicator */
-.typing-dot {
-  width: 6px; height: 6px;
-  background: var(--text3);
-  border-radius: 50%;
-  animation: typing 0.8s infinite;
-}
+.typing-dot { width: 6px; height: 6px; background: var(--text3); border-radius: 50%; animation: typing 0.8s infinite; }
 .typing-dot:nth-child(2) { animation-delay: 0.15s; }
 .typing-dot:nth-child(3) { animation-delay: 0.3s; }
-@keyframes typing {
-  0%,100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.2); }
-}
-
-/* Voice wave */
-.voice-wave-bar {
-  background: var(--red);
-  border-radius: 2px;
-  animation: voiceWave 1.2s ease-in-out infinite;
-}
-@keyframes voiceWave {
-  0%,100% { height: 4px; }
-  50% { height: 28px; }
-}
-
-/* React Hot Toast overrides */
-.react-hot-toast {
-  background: var(--bg2) !important;
-  color: var(--text) !important;
-  border: 1px solid var(--border2) !important;
-}
+.voice-wave-bar { background: var(--red); border-radius: 2px; animation: voiceWave 1.2s ease-in-out infinite; }
+.animate-pulse-dot { animation: pulse-dot 2s infinite; }
