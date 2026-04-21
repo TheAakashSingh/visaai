@@ -1,4 +1,4 @@
-// src/App.jsx — Complete routing: VisaAI Pro Admin + WeVisa Agent Portal
+// src/App.jsx — Complete routing: WeVisa Landing + Admin + Agent Portal
 import React, { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -8,6 +8,9 @@ import { AnimatePresence } from 'framer-motion'
 import useAuthStore from '@/store/authStore'
 import useWeVisaStore from '@/store/wevisaStore'
 import { initSocket } from '@/services/socket'
+
+// ─── WeVisa Landing Page (public) ─
+import WeVisaLandingPage from '@/components/pages/WeVisaLandingPage'
 
 // ─── Admin Panel (VisaAI Pro — dark theme) ──
 import DashboardLayout     from '@/components/layout/DashboardLayout'
@@ -27,8 +30,7 @@ import SettingsPage        from '@/components/pages/SettingsPage'
 import CRMPage             from '@/components/pages/CRMPage'
 import WeVisaManagePage    from '@/components/pages/WeVisaManagePage'
 
-// ─── WeVisa B2B Agent Portal ─
-import WeVisaLandingPage        from '@/components/pages/WeVisaLandingPage'
+// ─── WeVisa Agent Portal ─
 import WeVisaAuthPage           from '@/components/wevisa/WeVisaAuthPage'
 import WeVisaLayout             from '@/components/wevisa/WeVisaLayout'
 import WeVisaDashboardPage      from '@/components/wevisa/WeVisaDashboardPage'
@@ -47,7 +49,7 @@ const queryClient = new QueryClient({
 // ── Route Guards ──
 const AdminRoute = ({ children }) => {
   const ok = useAuthStore(s => s.isAuthenticated)
-  return ok ? children : <Navigate to="/login" replace />
+  return ok ? children : <Navigate to="/admin" replace />
 }
 
 const WeVisaRoute = ({ children }) => {
@@ -72,14 +74,15 @@ export default function App() {
         <AnimatePresence mode="wait">
           <Routes>
 
-            {/* ── ROOT: Redirect to admin dashboard ── */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            {/* ── PUBLIC: WeVisa Landing Page ── */}
+            <Route path="/" element={<WeVisaLandingPage />} />
+            <Route path="/index.html" element={<WeVisaLandingPage />} />
 
             {/* ── ADMIN AUTH ── */}
-            <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
+            <Route path="/admin" element={isAuthenticated ? <Navigate to="/admin/dashboard" replace /> : <LoginPage />} />
 
             {/* ── ADMIN PANEL ── */}
-            <Route path="/dashboard" element={<AdminRoute><DashboardLayout /></AdminRoute>}>
+            <Route path="/admin/dashboard" element={<AdminRoute><DashboardLayout /></AdminRoute>}>
               <Route index element={<DashboardPage />} />
               <Route path="leads" element={<LeadsPage />} />
               <Route path="contacts" element={<ContactsPage />} />
@@ -114,8 +117,12 @@ export default function App() {
               <Route path="profile" element={<WeVisaProfilePage />} />
             </Route>
 
+            {/* ── LEGACY: Redirect old paths ── */}
+            <Route path="/login" element={<Navigate to="/admin" replace />} />
+            <Route path="/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
+
             {/* ── CATCH-ALL ── */}
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
 
           </Routes>
         </AnimatePresence>

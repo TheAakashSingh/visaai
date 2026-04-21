@@ -9,29 +9,29 @@ import useAuthStore from '@/store/authStore'
 import useUIStore from '@/store/uiStore'
 import { getSocket } from '@/services/socket'
 
-const BASE = '/dashboard'
+const BASE = '/admin/dashboard'
 const NAV = [
   // ── VisaAI Pro CRM ──
   { path: BASE, label: 'Dashboard', icon: '⚡', exact: true },
   null,
-  { path: `${BASE}/leads`,    label: 'Leads',    icon: '👥', badge: 'leads' },
-  { path: `${BASE}/contacts`, label: 'Contacts', icon: '📒' },
-  { path: `${BASE}/deals`,    label: 'Deals',    icon: '💼' },
-  { path: `${BASE}/calendar`, label: 'Calendar', icon: '📅' },
-  { path: `${BASE}/crm`,      label: 'CRM',      icon: '🔗' },
+  { path: '/admin/dashboard/leads',    label: 'Leads',    icon: '👥', badge: 'leads' },
+  { path: '/admin/dashboard/contacts', label: 'Contacts', icon: '📒' },
+  { path: '/admin/dashboard/deals',    label: 'Deals',    icon: '💼' },
+  { path: '/admin/dashboard/calendar', label: 'Calendar', icon: '📅' },
+  { path: '/admin/dashboard/crm',      label: 'CRM',      icon: '🔗' },
   null,
   // ── AI Tools ──
-  { path: `${BASE}/chatbot`,      label: 'WhatsApp Bot',   icon: '💬', badge: 'live' },
-  { path: `${BASE}/voice`,        label: 'Voice Bot',      icon: '📞' },
-  { path: `${BASE}/ocr`,          label: 'Document OCR',   icon: '🔍' },
-  { path: `${BASE}/ai-assistant`, label: 'AI Assistant',   icon: '🤖' },
-  { path: `${BASE}/knowledge`,    label: 'Knowledge Base', icon: '📚' },
-  { path: `${BASE}/analytics`,    label: 'Analytics',      icon: '📊' },
+  { path: '/admin/dashboard/chatbot',      label: 'WhatsApp Bot',   icon: '💬', badge: 'live' },
+  { path: '/admin/dashboard/voice',        label: 'Voice Bot',      icon: '📞' },
+  { path: '/admin/dashboard/ocr',          label: 'Document OCR',   icon: '🔍' },
+  { path: '/admin/dashboard/ai-assistant', label: 'AI Assistant',   icon: '🤖' },
+  { path: '/admin/dashboard/knowledge',    label: 'Knowledge Base', icon: '📚' },
+  { path: '/admin/dashboard/analytics',    label: 'Analytics',      icon: '📊' },
   null,
   // ── WeVisa B2B Manage ──
-  { path: `${BASE}/wevisa-manage`, label: 'WeVisa Manage', icon: '🌐', section: 'WeVisa Platform' },
+  { path: '/admin/dashboard/wevisa-manage', label: 'WeVisa Manage', icon: '🌐', section: 'WeVisa Platform' },
   null,
-  { path: `${BASE}/settings`, label: 'Settings', icon: '⚙️' },
+  { path: '/admin/dashboard/settings', label: 'Settings', icon: '⚙️' },
 ]
 
 export default function DashboardLayout() {
