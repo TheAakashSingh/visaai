@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { PageHeader, MetricCard, StatusBadge, Spinner, EmptyState } from '@/components/ui'
-import { wevisaAdminAPI } from '@/services/wevisaApi'
+import { wevisaAdminAPI, adminApi } from '@/services/wevisaApi'
 
 const REGIONS    = ['Asia','Europe','Americas','Africa','Oceania','Middle East']
 const CATEGORIES = ['evisa','sticker','on_arrival','appointment','free']
@@ -284,6 +284,9 @@ export default function WeVisaManagePage() {
         subtitle="Everything changed here reflects live on the landing page and agent portal instantly."
         action={
           <div className="flex gap-2">
+            <button onClick={()=>seedData.mutate()} disabled={seedData.isPending} className="btn-outline text-xs py-2 bg-green-500/10 border-green-500/20 text-green-400 hover:bg-green-500/20">
+              {seedData.isPending?'Seeding...':'🌱 Seed Data'}
+            </button>
             <button onClick={()=>{setEditCountry(null);setShowCountry(true)}} className="btn-outline text-xs py-2">+ Add Country</button>
             <button onClick={()=>{setEditPackage(null);setShowPackage(true)}} className="btn-primary text-xs py-2">+ Add Package</button>
           </div>

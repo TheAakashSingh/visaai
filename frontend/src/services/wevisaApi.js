@@ -165,6 +165,9 @@ export const wevisaAdminAPI = {
   getDocumentTypes:    ()      => adminApi.get('/document-types'),
   createDocumentType:  (d)     => adminApi.post('/document-types', d),
   updateDocumentType:  (id, d) => adminApi.put(`/document-types/${id}`, d),
+  
+  // Seed data
+  seedData: () => adminApi.post('/seed'),
 }
 
 export default wevisaApi
