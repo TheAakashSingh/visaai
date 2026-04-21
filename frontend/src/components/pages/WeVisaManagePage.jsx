@@ -13,6 +13,63 @@ const TABS       = ['Overview','Countries','Packages','Agents','Applications','P
 const IL = 'input w-full'
 const LB = 'block text-xs font-semibold text-[var(--text2)] uppercase tracking-wider mb-1.5'
 
+// ── View Documents Modal (Admin) ──────────────────────────────────
+function ViewDocsModal({ application, onClose }) {
+  if (!application) return null
+  return (
+    <div className="fixed inset-0 z-[400] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose}/>
+      <motion.div initial={{opacity:0,scale:.95}} animate={{opacity:1,scale:1}}
+        className="relative bg-bg2 rounded-2xl border border-[rgba(255,255,255,0.08)] shadow-2xl w-full max-w-lg z-10 max-h-[80vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(255,255,255,0.07)]">
+          <h3 className="font-syne font-bold text-white">📄 Application Documents</h3>
+          <button onClick={onClose} className="text-[var(--text3)] hover:text-white text-xl">×</button>
+        </div>
+        <div className="p-6 space-y-4">
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
+            <div className="text-sm font-semibold text-white mb-1">{application.applicantName}</div>
+            <div className="text-xs text-[var(--text3)]">{application.country} · {application.visaType} · ₹{application.price?.toLocaleString()}</div>
+            {application.trackingId && <div className="text-xs text-yellow-400 mt-1">Tracking: {application.trackingId}</div>}
+          </div>
+          
+          {application.documents && application.documents.length > 0 ? (
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-[var(--text2)] uppercase mb-2">Uploaded Documents ({application.documents.length})</div>
+              {application.documents.map((doc, i) => (
+                <div key={i} className="flex items-center justify-between bg-bg3 rounded-lg px-4 py-3 border border-[rgba(255,255,255,0.05)]">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">📄</span>
+                    <div>
+                      <div className="text-sm font-medium text-white">{doc.name}</div>
+                      <div className="text-xs text-[var(--text3)]">{doc.type || 'Document'}</div>
+                    </div>
+                  </div>
+                  {doc.url ? (
+                    <a href={doc.url} target="_blank" rel="noreferrer" className="px-3 py-1.5 rounded-lg bg-blue-500/20 text-blue-400 text-xs font-semibold hover:bg-blue-500/30">
+                      View
+                    </a>
+                  ) : (
+                    <span className="text-xs text-yellow-400">Pending Upload</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="text-4xl mb-2 opacity-30">📄</div>
+              <div className="text-sm text-[var(--text3)]">No documents uploaded yet</div>
+            </div>
+          )}
+          
+          <div className="flex gap-3 pt-2">
+            <button onClick={onClose} className="flex-1 btn-outline">Close</button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
 // ── Country Modal ──────────────────────────────────────────────
 function CountryModal({ country, onClose }) {
   const qc = useQueryClient()
@@ -177,6 +234,7 @@ export default function WeVisaManagePage() {
   const [editCountry, setEditCountry] = useState(null)
   const [showPackage, setShowPackage] = useState(false)
   const [editPackage, setEditPackage] = useState(null)
+  const [viewDocsApp, setViewDocsApp] = useState(null)
   const [cSearch,  setCSearch]  = useState('')
   const [aSearch,  setASearch]  = useState('')
   const qc = useQueryClient()
@@ -476,12 +534,12 @@ export default function WeVisaManagePage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead><tr className="border-b border-[rgba(255,255,255,0.07)]">
-                {['Applicant','Country / Visa','Agent','Price','Payment','Status','Date'].map(h=>(
+                {['Applicant','Country / Visa','Agent','Price','Payment','Status','Documents','Date'].map(h=>(
                   <th key={h} className="text-left px-4 py-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--text3)]">{h}</th>
                 ))}
               </tr></thead>
               <tbody className="divide-y divide-[rgba(255,255,255,0.05)]">
-                {applications.length===0?<tr><td colSpan={7}><EmptyState icon="📋" title="No applications" description="Visa applications by agents appear here"/></td></tr>
+                {applications.length===0?<tr><td colSpan={8}><EmptyState icon="📋" title="No applications" description="Visa applications by agents appear here"/></td></tr>
                   :applications.map(app=>(
                     <motion.tr key={app._id} initial={{opacity:0}} animate={{opacity:1}} className="hover:bg-white/[0.02]">
                       <td className="px-4 py-3"><div className="text-xs font-semibold text-white">{app.applicantName}</div><div className="text-[10px] text-[var(--text3)] font-mono">{app.trackingId}</div></td>
@@ -494,6 +552,12 @@ export default function WeVisaManagePage() {
                           className="text-[10px] px-2 py-1 rounded-lg bg-bg3 border border-[rgba(255,255,255,0.07)] text-[var(--text2)] focus:outline-none cursor-pointer">
                           {['submitted','processing','approved','rejected','cancelled'].map(s=><option key={s} value={s}>{s}</option>)}
                         </select>
+                      </td>
+                      <td className="px-4 py-3">
+                        <button onClick={()=>setViewDocsApp(app)}
+                          className={`text-[10px] px-2.5 py-1 rounded-lg font-semibold transition-all ${app.documents?.length > 0 ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30' : 'bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30'}`}>
+                          📄 {app.documents?.length || 0} docs
+                        </button>
                       </td>
                       <td className="px-4 py-3 text-[10px] text-[var(--text3)]">{new Date(app.createdAt).toLocaleDateString('en-IN')}</td>
                     </motion.tr>
@@ -585,6 +649,7 @@ export default function WeVisaManagePage() {
       <AnimatePresence>
         {showCountry&&<CountryModal country={editCountry} onClose={()=>{setShowCountry(false);setEditCountry(null)}}/>}
         {showPackage&&<PackageModal pkg={editPackage} onClose={()=>{setShowPackage(false);setEditPackage(null)}}/>}
+        {viewDocsApp&&<ViewDocsModal application={viewDocsApp} onClose={()=>setViewDocsApp(null)}/>}
       </AnimatePresence>
     </div>
   )

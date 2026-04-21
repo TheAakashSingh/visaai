@@ -5,30 +5,14 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { publicAPI } from '@/services/wevisaApi'
 
-const DESTINATIONS = ['Dubai', 'Singapore', 'USA', 'Thailand', 'Malaysia', 'Canada', 'UK', 'Australia', 'Vietnam', 'Bali']
+// No fallback - all data from API - if empty show empty state
+const DESTINATIONS = []
 
-const FALLBACK_TRENDING = [
-  { name: 'Dubai', flag: '🇦🇪', count: '200K+', img: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=600&q=80', price: '₹236', processing: '4 Hours' },
-  { name: 'Vietnam', flag: '🇻🇳', count: '74K+', img: 'https://images.unsplash.com/photo-1528127269322-539801943592?w=600&q=80', price: '₹899', processing: '2 Hours' },
-  { name: 'USA', flag: '🇺🇸', count: '61K+', img: 'https://images.unsplash.com/photo-1485738422979-f5c462d49f74?w=600&q=80', price: 'On Request', processing: '14 Days' },
-  { name: 'Singapore', flag: '🇸🇬', count: '84K+', img: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=600&q=80', price: '₹1,450', processing: '24 Hours' },
-  { name: 'Australia', flag: '🇦🇺', count: '52K+', img: 'https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=600&q=80', price: '₹5,200', processing: '15 Days' },
-]
+const FALLBACK_TRENDING = []
 
-const FALLBACK_EXPRESS = [
-  { country: 'Dubai', flag: '🇦🇪', processing: '4 Hours', stay: '30 Days', img: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=400&q=75' },
-  { country: 'Singapore', flag: '🇸🇬', processing: '24 Hours', stay: '30 Days', img: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=400&q=75' },
-  { country: 'Vietnam', flag: '🇻🇳', processing: '2 Hours', stay: '30 Days', img: 'https://images.unsplash.com/photo-1528127269322-539801943592?w=400&q=75' },
-  { country: 'Bali', flag: '🇮🇩', processing: '24 Hours', stay: '30 Days', img: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&q=75' },
-  { country: 'Turkey', flag: '🇹🇷', processing: '24 Hours', stay: '90 Days', img: 'https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?w=400&q=75' },
-  { country: 'Thailand', flag: '🇹🇭', processing: '12 Hours', stay: '60 Days', img: 'https://images.unsplash.com/photo-1512100356356-de1b84283e18?w=400&q=75' },
-]
+const FALLBACK_EXPRESS = []
 
-const FALLBACK_NEWS = [
-  { date: 'Apr 16, 2026', title: 'New Visa Rules for Schengen Countries in 2026', desc: 'Important changes to processing times and requirements every agent should know.', tags: ['Schengen', 'Europe'], img: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=500&q=75' },
-  { date: 'Apr 15, 2026', title: 'Top 10 Documents Needed for US Tourist Visa', desc: 'A comprehensive checklist for your clients B1/B2 visa interviews.', tags: ['USA', 'Documents'], img: 'https://images.unsplash.com/photo-1485738422979-f5c462d49f74?w=500&q=75' },
-  { date: 'Apr 14, 2026', title: 'How to Track Your Visa Application Status', desc: 'Step-by-step guide using our platform to keep clients updated in real time.', tags: ['Guide', 'Tips'], img: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=500&q=75' },
-]
+const FALLBACK_NEWS = []
 
 const TOOLS = [
   { icon: '📊', title: 'CRM Dashboard', desc: 'Manage clients, leads & operations from one place', path: '/wevisa/crm' },

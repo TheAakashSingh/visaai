@@ -1,4 +1,4 @@
-// src/App.jsx — Complete routing: Landing Page (public) + Admin Panel (dark) + WeVisa Agent Portal (light)
+// src/App.jsx — Complete routing: VisaAI Pro Admin + WeVisa Agent Portal
 import React, { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -9,10 +9,7 @@ import useAuthStore from '@/store/authStore'
 import useWeVisaStore from '@/store/wevisaStore'
 import { initSocket } from '@/services/socket'
 
-// ─── Public Landing Page ───────────────────────────────────────
-import LandingPage from '@/components/pages/WeVisaLandingPage'
-
-// ─── Admin Panel (VisaAI Pro — dark theme, company/admin use) ──
+// ─── Admin Panel (VisaAI Pro — dark theme) ──
 import DashboardLayout     from '@/components/layout/DashboardLayout'
 import LoginPage           from '@/components/pages/LoginPage'
 import DashboardPage       from '@/components/pages/DashboardPage'
@@ -30,8 +27,7 @@ import SettingsPage        from '@/components/pages/SettingsPage'
 import CRMPage             from '@/components/pages/CRMPage'
 import WeVisaManagePage    from '@/components/pages/WeVisaManagePage'
 
-// ─── WeVisa B2B Agent Portal (light theme, agent use at /wevisa) ─
-// NOTE: WeVisaLandingPage is now the dynamic one in pages folder - used for /wevisa route
+// ─── WeVisa B2B Agent Portal ─
 import WeVisaLandingPage        from '@/components/pages/WeVisaLandingPage'
 import WeVisaAuthPage           from '@/components/wevisa/WeVisaAuthPage'
 import WeVisaLayout             from '@/components/wevisa/WeVisaLayout'
@@ -48,14 +44,12 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30000, refetchOnWindowFocus: false } },
 })
 
-// ── Route Guards ──────────────────────────────────────────────
-// Admin panel guard — uses VisaAI Pro auth (admin@company.com login)
+// ── Route Guards ──
 const AdminRoute = ({ children }) => {
   const ok = useAuthStore(s => s.isAuthenticated)
   return ok ? children : <Navigate to="/login" replace />
 }
 
-// WeVisa agent portal guard — uses separate WeVisa agent auth
 const WeVisaRoute = ({ children }) => {
   const ok = useWeVisaStore(s => s.isAuthenticated)
   return ok ? children : <Navigate to="/wevisa/login" replace />
@@ -78,51 +72,36 @@ export default function App() {
         <AnimatePresence mode="wait">
           <Routes>
 
-            {/* ══════ PUBLIC LANDING PAGE ══════
-                - Accessible to everyone at /
-                - No auth required
-            */}
-            <Route path="/" element={<LandingPage />} />
+            {/* ── ROOT: Redirect to admin dashboard ── */}
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-            {/* ══════ ADMIN PANEL ══════
-                - Login at /login  (company admin, dark theme)
-                - Dashboard at /dashboard  (VisaAI Pro SaaS panel)
-                - Includes WeVisa platform management at /dashboard/wevisa-manage
-            */}
-            <Route
-              path="/login"
-              element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />}
-            />
+            {/* ── ADMIN AUTH ── */}
+            <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
+
+            {/* ── ADMIN PANEL ── */}
             <Route path="/dashboard" element={<AdminRoute><DashboardLayout /></AdminRoute>}>
-              <Route index                  element={<DashboardPage />} />
-              <Route path="leads"           element={<LeadsPage />} />
-              <Route path="contacts"        element={<ContactsPage />} />
-              <Route path="deals"           element={<DealsPage />} />
-              <Route path="calendar"        element={<CalendarPage />} />
-              <Route path="chatbot"         element={<ChatbotPage />} />
-              <Route path="voice"           element={<VoicePage />} />
-              <Route path="ocr"             element={<OCRPage />} />
-              <Route path="ai-assistant"    element={<AIAssistantPage />} />
-              <Route path="knowledge"       element={<KnowledgePage />} />
-              <Route path="analytics"       element={<AnalyticsPage />} />
-              <Route path="settings"        element={<SettingsPage />} />
-              <Route path="crm"             element={<CRMPage />} />
-              {/* WeVisa B2B platform management (admin controls countries, packages, agents) */}
-              <Route path="wevisa-manage"   element={<WeVisaManagePage />} />
+              <Route index element={<DashboardPage />} />
+              <Route path="leads" element={<LeadsPage />} />
+              <Route path="contacts" element={<ContactsPage />} />
+              <Route path="deals" element={<DealsPage />} />
+              <Route path="calendar" element={<CalendarPage />} />
+              <Route path="chatbot" element={<ChatbotPage />} />
+              <Route path="voice" element={<VoicePage />} />
+              <Route path="ocr" element={<OCRPage />} />
+              <Route path="ai-assistant" element={<AIAssistantPage />} />
+              <Route path="knowledge" element={<KnowledgePage />} />
+              <Route path="analytics" element={<AnalyticsPage />} />
+              <Route path="settings" element={<SettingsPage />} />
+              <Route path="crm" element={<CRMPage />} />
+              <Route path="wevisa-manage" element={<WeVisaManagePage />} />
             </Route>
 
-            {/* ══════ WEVISA AGENT PORTAL ══════
-                - /wevisa         (public marketing page - dynamic landing)
-                - /wevisa/login     (agent login)
-                - /wevisa/register (agent register)
-                - /wevisa/dashboard  (agent's own portal)
-                - All agent features: CRM, Apply, Tickets, Appointments, Invoice
-            */}
+            {/* ── WEVISA PUBLIC ── */}
             <Route path="/wevisa" element={<WeVisaLandingPage />} />
             <Route path="/wevisa/login" element={<WeVisaPublic><WeVisaAuthPage /></WeVisaPublic>} />
             <Route path="/wevisa/register" element={<WeVisaPublic><WeVisaAuthPage /></WeVisaPublic>} />
 
-            {/* Protected agent routes - uses nested routes under /wevisa/* */}
+            {/* ── WEVISA PROTECTED ── */}
             <Route path="/wevisa/*" element={<WeVisaRoute><WeVisaLayout /></WeVisaRoute>}>
               <Route index element={<Navigate to="/wevisa/dashboard" replace />} />
               <Route path="dashboard" element={<WeVisaDashboardPage />} />
@@ -135,7 +114,7 @@ export default function App() {
               <Route path="profile" element={<WeVisaProfilePage />} />
             </Route>
 
-            {/* Catch-all → redirect unknown routes to dashboard */}
+            {/* ── CATCH-ALL ── */}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
 
           </Routes>

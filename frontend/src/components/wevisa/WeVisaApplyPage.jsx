@@ -11,21 +11,8 @@ const lbl = 'block text-xs font-bold text-gray-600 mb-1.5'
 
 const SCLR = { submitted:'bg-blue-100 text-blue-700', processing:'bg-yellow-100 text-yellow-700', approved:'bg-green-100 text-green-700', rejected:'bg-red-100 text-red-700', cancelled:'bg-gray-100 text-gray-500' }
 
-// Fallback when DB is empty
-const FALLBACK = [
-  {_id:'fb1',countryName:'United Arab Emirates',countryFlag:'🇦🇪',visaType:'Tourist',processingTime:'4 Hours',  stayDuration:'30 Days', price:2499, isExpress:true, category:'evisa'},
-  {_id:'fb2',countryName:'Singapore',           countryFlag:'🇸🇬',visaType:'Tourist',processingTime:'24 Hours', stayDuration:'30 Days', price:3999, isExpress:true, category:'evisa'},
-  {_id:'fb3',countryName:'Vietnam',             countryFlag:'🇻🇳',visaType:'Tourist',processingTime:'2 Hours',  stayDuration:'30 Days', price:1499, isExpress:true, category:'evisa'},
-  {_id:'fb4',countryName:'Bali (Indonesia)',    countryFlag:'🇮🇩',visaType:'Tourist',processingTime:'24 Hours', stayDuration:'30 Days', price:2999, isExpress:true, category:'evisa'},
-  {_id:'fb5',countryName:'Turkey',              countryFlag:'🇹🇷',visaType:'Tourist',processingTime:'24 Hours', stayDuration:'90 Days', price:3499, isExpress:true, category:'evisa'},
-  {_id:'fb6',countryName:'Canada',              countryFlag:'🇨🇦',visaType:'Tourist',processingTime:'4-6 Weeks',stayDuration:'6 Months',price:12000,isExpress:false,category:'sticker'},
-  {_id:'fb7',countryName:'United Kingdom',      countryFlag:'🇬🇧',visaType:'Tourist',processingTime:'3 Weeks', stayDuration:'6 Months',price:15000,isExpress:false,category:'sticker'},
-  {_id:'fb8',countryName:'Germany',             countryFlag:'🇩🇪',visaType:'Schengen',processingTime:'15 Days', stayDuration:'90 Days', price:8000, isExpress:false,category:'appointment'},
-  {_id:'fb9',countryName:'France',              countryFlag:'🇫🇷',visaType:'Schengen',processingTime:'15 Days', stayDuration:'90 Days', price:8500, isExpress:false,category:'appointment'},
-  {_id:'fb10',countryName:'Australia',           countryFlag:'🇦🇺',visaType:'Tourist',processingTime:'4-6 Weeks',stayDuration:'3 Months',price:18000,isExpress:false,category:'sticker'},
-  {_id:'fb11',countryName:'Thailand',            countryFlag:'🇹🇭',visaType:'Tourist',processingTime:'3-5 Days',stayDuration:'30 Days', price:2999, isExpress:false,category:'evisa'},
-  {_id:'fb12',countryName:'Malaysia',            countryFlag:'🇲🇾',visaType:'eVisa',  processingTime:'3-5 Days',stayDuration:'30 Days', price:1999, isExpress:false,category:'evisa'},
-]
+// No fallback - all data should come from admin API
+const FALLBACK = []
 
 function ViewDetailsModal({ pkg, onClose, onApply }) {
   if (!pkg) return null
@@ -111,20 +98,39 @@ function ViewDetailsModal({ pkg, onClose, onApply }) {
 function ApplyModal({ pkg, onClose }) {
   const [step,setStep] = useState(1)
   const [f,setF] = useState({ applicantName:'',applicantEmail:'',applicantPhone:'',passportNumber:'',travelDate:'',returnDate:'',numberOfApplicants:1,notes:'' })
+  const [documents, setDocuments] = useState([])
   const qc = useQueryClient()
+  
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files)
+    const newDocs = files.map(file => ({
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      file: file
+    }))
+    setDocuments([...documents, ...newDocs])
+  }
+  
+  const removeDoc = (idx) => {
+    setDocuments(documents.filter((_, i) => i !== idx))
+  }
+  
   const m = useMutation({
     mutationFn: () => wevisaServicesAPI.createApplication({
       country: pkg.countryName||pkg.country, visaType: pkg.visaType,
       packageId: pkg._id, packageName: pkg.name||`${pkg.countryName} - ${pkg.visaType}`,
       processingTime: pkg.processingTime, stayDuration: pkg.stayDuration, price: pkg.price, ...f,
+      documents: documents.map(d => ({ name: d.name, type: d.type })),
     }),
     onSuccess: () => { qc.invalidateQueries(['wv-apps']); toast.success(`✅ Application submitted!`); onClose() },
   })
+  
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}/>
-      <motion.div initial={{opacity:0,scale:.95,y:20}} animate={{opacity:1,scale:1,y:0}} className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg z-10 overflow-hidden">
-        <div className="bg-gradient-to-r from-blue-700 to-blue-600 px-6 py-5 text-white">
+      <motion.div initial={{opacity:0,scale:.95,y:20}} animate={{opacity:1,scale:1,y:0}} className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg z-10 overflow-hidden max-h-[90vh] overflow-y-auto">
+        <div className="bg-gradient-to-r from-blue-700 to-blue-600 px-6 py-5 text-white flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="text-3xl">{pkg.countryFlag||pkg.flag||'🌍'}</span>
@@ -141,8 +147,11 @@ function ApplyModal({ pkg, onClose }) {
           <div className="flex gap-2 mt-4">
             <div className={`flex-1 h-1 rounded-full ${step>=1?'bg-white':'bg-white/30'}`}/>
             <div className={`flex-1 h-1 rounded-full ${step>=2?'bg-white':'bg-white/30'}`}/>
+            <div className={`flex-1 h-1 rounded-full ${step>=3?'bg-white':'bg-white/30'}`}/>
           </div>
-          <div className="text-xs text-blue-200 mt-1">{step===1?'Step 1: Applicant Details':'Step 2: Travel & Confirm'}</div>
+          <div className="text-xs text-blue-200 mt-1">
+            {step===1?'Step 1: Applicant Details':step===2?'Step 2: Document Upload':'Step 3: Travel & Confirm'}
+          </div>
         </div>
         <div className="p-6 space-y-4">
           {step===1?(
@@ -158,6 +167,48 @@ function ApplyModal({ pkg, onClose }) {
               </div>
               <button onClick={()=>setStep(2)} disabled={!f.applicantName} className="w-full py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 disabled:opacity-50 shadow-md">Continue →</button>
             </>
+          ):step===2?(
+            <>
+              <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-200">
+                <div className="text-sm font-bold text-yellow-800 mb-2">📄 Upload Required Documents</div>
+                <div className="text-xs text-yellow-700">Please upload passport copy, photo, and any other required documents.</div>
+              </div>
+              
+              <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-400 transition-all">
+                <input type="file" multiple onChange={handleFileUpload} className="hidden" id="doc-upload"/>
+                <label htmlFor="doc-upload" className="cursor-pointer">
+                  <div className="text-3xl mb-2">📁</div>
+                  <div className="text-sm font-semibold text-gray-700">Click to upload documents</div>
+                  <div className="text-xs text-gray-400 mt-1">PDF, JPG, PNG (max 10MB each)</div>
+                </label>
+              </div>
+              
+              {documents.length > 0 && (
+                <div className="space-y-2">
+                  {documents.map((doc, i) => (
+                    <div key={i} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">📄</span>
+                        <span className="text-xs text-gray-700 truncate max-w-[200px]">{doc.name}</span>
+                      </div>
+                      <button onClick={()=>removeDoc(i)} className="text-red-500 text-xs hover:text-red-700">✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
+                <div className="text-xs text-blue-700 font-semibold">Suggested Documents:</div>
+                <div className="text-xs text-blue-600">• Passport first & last page</div>
+                <div className="text-xs text-blue-600">• Recent passport photo</div>
+                <div className="text-xs text-blue-600">• Bank statement (last 6 months)</div>
+              </div>
+              
+              <div className="flex gap-3">
+                <button onClick={()=>setStep(1)} className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-semibold hover:border-gray-300">← Back</button>
+                <button onClick={()=>setStep(3)} className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-md">Continue →</button>
+              </div>
+            </>
           ):(
             <>
               <div className="grid grid-cols-2 gap-3">
@@ -169,11 +220,12 @@ function ApplyModal({ pkg, onClose }) {
                 <div className="flex justify-between"><span className="text-gray-500">Processing</span><span className="font-bold text-green-600">{pkg.processingTime}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">Stay Duration</span><span className="font-semibold text-gray-700">{pkg.stayDuration}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">Applicants</span><span className="font-semibold text-gray-700">{f.numberOfApplicants}</span></div>
+                {documents.length > 0 && <div className="flex justify-between"><span className="text-gray-500">Documents</span><span className="font-semibold text-gray-700">{documents.length} files</span></div>}
                 <div className="flex justify-between border-t border-blue-200 pt-2"><span className="font-bold text-gray-800">Total</span><span className="font-extrabold text-blue-700">₹{(pkg.price*f.numberOfApplicants).toLocaleString()}</span></div>
                 {pkg.commission>0&&<div className="flex justify-between"><span className="text-gray-500">Your Commission</span><span className="font-bold text-green-600">₹{(pkg.commission*f.numberOfApplicants).toLocaleString()}</span></div>}
               </div>
               <div className="flex gap-3">
-                <button onClick={()=>setStep(1)} className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-semibold hover:border-gray-300">← Back</button>
+                <button onClick={()=>setStep(2)} className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-semibold hover:border-gray-300">← Back</button>
                 <button onClick={()=>m.mutate()} disabled={m.isPending} className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 disabled:opacity-50 shadow-md">
                   {m.isPending?'Submitting...':'✅ Submit'}
                 </button>
