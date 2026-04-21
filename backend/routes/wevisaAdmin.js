@@ -111,14 +111,47 @@ router.get('/packages', adminAuth, async (req, res) => {
 
 router.post('/packages', adminAuth, async (req, res) => {
   try {
-    const pkg = await WeVisaPackage.create({ ...req.body, createdBy: req.admin._id });
+    const { countryName, countryFlag, countryCode, ...rest } = req.body;
+    
+    // Look up country ObjectId by name
+    let countryId = null;
+    if (countryName) {
+      const country = await WeVisaCountry.findOne({ name: countryName });
+      if (country) countryId = country._id;
+    }
+    
+    const pkg = await WeVisaPackage.create({ 
+      country: countryId,
+      countryName,
+      countryFlag,
+      countryCode,
+      ...rest, 
+      createdBy: req.admin._id 
+    });
     res.status(201).json({ success: true, data: pkg });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
 
 router.put('/packages/:id', adminAuth, async (req, res) => {
   try {
-    const pkg = await WeVisaPackage.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const { countryName, countryFlag, countryCode, ...rest } = req.body;
+    
+    // Look up country ObjectId by name if changed
+    let countryId = undefined;
+    if (countryName) {
+      const country = await WeVisaCountry.findOne({ name: countryName });
+      if (country) countryId = country._id;
+    }
+    
+    const updateData = { ...rest };
+    if (countryId) updateData.country = countryId;
+    if (countryName) {
+      updateData.countryName = countryName;
+      updateData.countryFlag = countryFlag;
+      updateData.countryCode = countryCode;
+    }
+    
+    const pkg = await WeVisaPackage.findByIdAndUpdate(req.params.id, updateData, { new: true });
     if (!pkg) return res.status(404).json({ success: false, message: 'Not found' });
     res.json({ success: true, data: pkg });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
@@ -312,6 +345,70 @@ router.get('/public/usa-pricing', async (req, res) => {
 // GET /api/wevisa-admin/public/dummy-ticket-pricing
 router.get('/public/dummy-ticket-pricing', async (req, res) => {
   res.json({ success: true, data: { price: 299, description: 'Valid for 30 days. For visa application reference only.' }});
+});
+
+// ── Seed Data Endpoint ───────────────────────────────────────
+router.post('/seed', adminAuth, async (req, res) => {
+  try {
+    const COUNTRIES = [
+      { name: 'United Arab Emirates', code: 'AE', flag: '🇦🇪', region: 'Middle East', capital: 'Abu Dhabi', isFeatured: true, isActive: true },
+      { name: 'Singapore', code: 'SG', flag: '🇸🇬', region: 'Asia', capital: 'Singapore', isFeatured: true, isActive: true },
+      { name: 'Vietnam', code: 'VN', flag: '🇻🇳', region: 'Asia', capital: 'Hanoi', isFeatured: true, isActive: true },
+      { name: 'Thailand', code: 'TH', flag: '🇹🇭', region: 'Asia', capital: 'Bangkok', isActive: true },
+      { name: 'Malaysia', code: 'MY', flag: '🇲🇾', region: 'Asia', capital: 'Kuala Lumpur', isActive: true },
+      { name: 'Indonesia', code: 'ID', flag: '🇮🇩', region: 'Asia', capital: 'Jakarta', isActive: true },
+      { name: 'Turkey', code: 'TR', flag: '🇹🇷', region: 'Europe', capital: 'Ankara', isActive: true },
+      { name: 'UK', code: 'GB', flag: '🇬🇧', region: 'Europe', capital: 'London', isFeatured: true, isActive: true, isSchengen: false },
+      { name: 'USA', code: 'US', flag: '🇺🇸', region: 'Americas', capital: 'Washington DC', isFeatured: true, isActive: true },
+      { name: 'Canada', code: 'CA', flag: '🇨🇦', region: 'Americas', capital: 'Ottawa', isActive: true },
+      { name: 'Australia', code: 'AU', flag: '🇦🇺', region: 'Oceania', capital: 'Canberra', isActive: true },
+      { name: 'Germany', code: 'DE', flag: '🇩🇪', region: 'Europe', capital: 'Berlin', isActive: true, isSchengen: true },
+      { name: 'France', code: 'FR', flag: '🇫🇷', region: 'Europe', capital: 'Paris', isActive: true, isSchengen: true },
+      { name: 'Italy', code: 'IT', flag: '🇮🇹', region: 'Europe', capital: 'Rome', isActive: true, isSchengen: true },
+      { name: 'Spain', code: 'ES', flag: '🇪🇸', region: 'Europe', capital: 'Madrid', isActive: true, isSchengen: true },
+      { name: 'Japan', code: 'JP', flag: '🇯🇵', region: 'Asia', capital: 'Tokyo', isActive: true },
+      { name: 'Maldives', code: 'MV', flag: '🇲🇻', region: 'Asia', capital: 'Malé', isActive: true },
+    ];
+    
+    const PACKAGES = [
+      { countryName: 'United Arab Emirates', countryFlag: '🇦🇪', countryCode: 'AE', name: '30 Days Tourist Visa', visaType: 'Tourist', category: 'evisa', stayDuration: '30 Days', validity: '60 Days', entries: 'single', processingTime: '4 Hours', price: 2499, agentCost: 1800, commission: 699, isExpress: true, isFeatured: true, isActive: true },
+      { countryName: 'Singapore', countryFlag: '🇸🇬', countryCode: 'SG', name: '30 Days Tourist Visa', visaType: 'Tourist', category: 'evisa', stayDuration: '30 Days', validity: '60 Days', entries: 'single', processingTime: '24 Hours', price: 3999, agentCost: 2800, commission: 1199, isExpress: true, isFeatured: true, isActive: true },
+      { countryName: 'Vietnam', countryFlag: '🇻🇳', countryCode: 'VN', name: '90 Days Tourist Visa', visaType: 'Tourist', category: 'evisa', stayDuration: '90 Days', validity: '90 Days', entries: 'multiple', processingTime: '2 Hours', price: 1499, agentCost: 900, commission: 599, isExpress: true, isFeatured: true, isActive: true },
+      { countryName: 'Thailand', countryFlag: '🇹🇭', countryCode: 'TH', name: '60 Days Tourist Visa', visaType: 'Tourist', category: 'evisa', stayDuration: '60 Days', validity: '60 Days', entries: 'single', processingTime: '3-5 Days', price: 2999, agentCost: 2200, commission: 799, isActive: true },
+      { countryName: 'Malaysia', countryFlag: '🇲🇾', countryCode: 'MY', name: '30 Days e-Visa', visaType: 'Tourist', category: 'evisa', stayDuration: '30 Days', validity: '30 Days', entries: 'single', processingTime: '3-5 Days', price: 1999, agentCost: 1400, commission: 599, isActive: true },
+      { countryName: 'Turkey', countryFlag: '🇹🇷', countryCode: 'TR', name: '90 Days Tourist Visa', visaType: 'Tourist', category: 'evisa', stayDuration: '90 Days', validity: '180 Days', entries: 'multiple', processingTime: '24 Hours', price: 3499, agentCost: 2600, commission: 899, isExpress: true, isActive: true },
+      { countryName: 'Indonesia', countryFlag: '🇮🇩', countryCode: 'ID', name: '30 Days VoA', visaType: 'Tourist', category: 'on_arrival', stayDuration: '30 Days', validity: '30 Days', entries: 'single', processingTime: 'On Arrival', price: 2999, agentCost: 2200, commission: 799, isActive: true },
+      { countryName: 'UK', countryFlag: '🇬🇧', countryCode: 'GB', name: 'Standard Visitor Visa', visaType: 'Tourist', category: 'sticker', stayDuration: '6 Months', validity: '2 Years', entries: 'multiple', processingTime: '3 Weeks', price: 15000, agentCost: 12000, commission: 3000, isActive: true },
+      { countryName: 'USA', countryFlag: '🇺🇸', countryCode: 'US', name: 'B1/B2 Tourist Visa', visaType: 'Tourist', category: 'sticker', stayDuration: '6 Months', validity: '10 Years', entries: 'multiple', processingTime: '14 Days', price: 25000, agentCost: 20000, commission: 5000, isActive: true },
+      { countryName: 'Canada', countryFlag: '🇨🇦', countryCode: 'CA', name: 'Tourist Visa', visaType: 'Tourist', category: 'sticker', stayDuration: '6 Months', validity: '10 Years', entries: 'multiple', processingTime: '4-6 Weeks', price: 12000, agentCost: 9000, commission: 3000, isActive: true },
+      { countryName: 'Australia', countryFlag: '🇦🇺', countryCode: 'AU', name: 'Tourist Visa', visaType: 'Tourist', category: 'sticker', stayDuration: '3 Months', validity: '1 Year', entries: 'multiple', processingTime: '4-6 Weeks', price: 18000, agentCost: 14500, commission: 3500, isActive: true },
+      { countryName: 'Germany', countryFlag: '🇩🇪', countryCode: 'DE', name: 'Short Stay Visa', visaType: 'Tourist', category: 'appointment', stayDuration: '90 Days', validity: '90 Days', entries: 'single', processingTime: '15 Days', price: 8000, agentCost: 6500, commission: 1500, isActive: true, isSchengen: true },
+      { countryName: 'France', countryFlag: '🇫🇷', countryCode: 'FR', name: 'Short Stay Visa', visaType: 'Tourist', category: 'appointment', stayDuration: '90 Days', validity: '90 Days', entries: 'single', processingTime: '15 Days', price: 8500, agentCost: 7000, commission: 1500, isActive: true, isSchengen: true },
+      { countryName: 'Japan', countryFlag: '🇯🇵', countryCode: 'JP', name: 'Tourist Visa', visaType: 'Tourist', category: 'evisa', stayDuration: '90 Days', validity: '90 Days', entries: 'multiple', processingTime: '5-7 Days', price: 4999, agentCost: 3800, commission: 1199, isActive: true },
+      { countryName: 'Maldives', countryFlag: '🇲🇻', countryCode: 'MV', name: '30 Days Tourist Visa', visaType: 'Tourist', category: 'evisa', stayDuration: '30 Days', validity: '30 Days', entries: 'single', processingTime: '1-2 Days', price: 3999, agentCost: 3000, commission: 999, isActive: true },
+    ];
+    
+    // Clear existing
+    await WeVisaCountry.deleteMany({});
+    await WeVisaPackage.deleteMany({});
+    
+    // Insert countries
+    await WeVisaCountry.insertMany(COUNTRIES);
+    
+    // Lookup and insert packages
+    for (const pkg of PACKAGES) {
+      const country = await WeVisaCountry.findOne({ name: pkg.countryName });
+      await WeVisaPackage.create({
+        ...pkg,
+        country: country?._id,
+      });
+    }
+    
+    const countryCount = await WeVisaCountry.countDocuments({});
+    const packageCount = await WeVisaPackage.countDocuments({});
+    
+    res.json({ success: true, message: 'Seed data added', countries: countryCount, packages: packageCount });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
 
 module.exports = router;

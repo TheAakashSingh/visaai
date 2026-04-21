@@ -258,6 +258,15 @@ export default function WeVisaManagePage() {
     mutationFn: ()=>wevisaAdminAPI.updateUSAPricing(pricingForm),
     onSuccess: ()=>{ qc.invalidateQueries(['admin-usa-pricing']); qc.invalidateQueries(['landing-usa-pricing']); toast.success('USA pricing updated! Changes reflect on landing page.') },
   })
+  const seedData = useMutation({
+    mutationFn: ()=>adminApi.post('/seed'),
+    onSuccess: (res)=>{
+      qc.invalidateQueries(['admin-countries']);
+      qc.invalidateQueries(['admin-packages']);
+      qc.invalidateQueries(['admin-wv-stats']);
+      toast.success(`✅ Seeded ${res.data.countries} countries & ${res.data.packages} packages!`);
+    },
+  })
 
   const STAT_CARDS = [
     {label:'Total Agents',    value:stats.agents??0,          change:`${stats.activeAgents??0} active`,   icon:'👥', accent:'blue'},
