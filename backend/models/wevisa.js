@@ -202,9 +202,15 @@ const wevisaCRMLeadSchema = new mongoose.Schema({
   email: String,
   phone: String,
   company: String,
-  source: { type: String, enum: ['website', 'referral', 'social', 'walk_in', 'other'], default: 'other' },
+  source: { 
+    type: String, 
+    enum: ['website', 'referral', 'social', 'walk_in', 'phone_call', 'email_campaign', 'facebook_ads', 'google_ads', 'justdial', 'other'], 
+    default: 'other' 
+  },
   visaInterest: String,
   destination: String,
+  travelDateGo: Date,
+  travelDateReturn: Date,
   budget: Number,
   travelDate: Date,
   status: {
