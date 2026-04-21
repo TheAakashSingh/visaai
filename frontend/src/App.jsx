@@ -10,7 +10,7 @@ import useWeVisaStore from '@/store/wevisaStore'
 import { initSocket } from '@/services/socket'
 
 // ─── Public Landing Page ───────────────────────────────────────
-import LandingPage from '@/components/pages/LandingPage'
+import LandingPage from '@/components/pages/WeVisaLandingPage'
 
 // ─── Admin Panel (VisaAI Pro — dark theme, company/admin use) ──
 import DashboardLayout     from '@/components/layout/DashboardLayout'
