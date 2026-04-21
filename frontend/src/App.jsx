@@ -31,7 +31,8 @@ import CRMPage             from '@/components/pages/CRMPage'
 import WeVisaManagePage    from '@/components/pages/WeVisaManagePage'
 
 // ─── WeVisa B2B Agent Portal (light theme, agent use at /wevisa) ─
-import WeVisaLandingPage        from '@/components/wevisa/WeVisaLandingPage'
+// NOTE: WeVisaLandingPage is now the dynamic one in pages folder - used for /wevisa route
+import WeVisaLandingPage        from '@/components/pages/WeVisaLandingPage'
 import WeVisaAuthPage           from '@/components/wevisa/WeVisaAuthPage'
 import WeVisaLayout             from '@/components/wevisa/WeVisaLayout'
 import WeVisaDashboardPage      from '@/components/wevisa/WeVisaDashboardPage'
@@ -111,27 +112,27 @@ export default function App() {
             </Route>
 
             {/* ══════ WEVISA AGENT PORTAL ══════
-                - Landing at /wevisa         (public marketing page)
-                - Login at /wevisa/login     (agent login, separate from admin)
-                - Register at /wevisa/register
-                - Dashboard at /wevisa/dashboard  (agent's own portal)
+                - /wevisa         (public marketing page - dynamic landing)
+                - /wevisa/login     (agent login)
+                - /wevisa/register (agent register)
+                - /wevisa/dashboard  (agent's own portal)
                 - All agent features: CRM, Apply, Tickets, Appointments, Invoice
             */}
-            <Route path="/wevisa"          element={<WeVisaLandingPage />} />
-            <Route path="/wevisa/login"    element={<WeVisaPublic><WeVisaAuthPage /></WeVisaPublic>} />
+            <Route path="/wevisa" element={<WeVisaLandingPage />} />
+            <Route path="/wevisa/login" element={<WeVisaPublic><WeVisaAuthPage /></WeVisaPublic>} />
             <Route path="/wevisa/register" element={<WeVisaPublic><WeVisaAuthPage /></WeVisaPublic>} />
 
-            {/* Protected agent routes */}
+            {/* Protected agent routes - uses nested routes under /wevisa/* */}
             <Route path="/wevisa/*" element={<WeVisaRoute><WeVisaLayout /></WeVisaRoute>}>
-              <Route index                   element={<Navigate to="/wevisa/dashboard" replace />} />
-              <Route path="dashboard"        element={<WeVisaDashboardPage />} />
-              <Route path="crm"              element={<WeVisaCRMPage />} />
-              <Route path="apply"            element={<WeVisaApplyPage />} />
-              <Route path="dummy-tickets"    element={<WeVisaDummyTicketsPage />} />
-              <Route path="usa-appointment"  element={<WeVisaUSAAppointmentPage />} />
-              <Route path="schengen"         element={<WeVisaSchengenPage />} />
-              <Route path="invoice"          element={<WeVisaInvoicePage />} />
-              <Route path="profile"          element={<WeVisaProfilePage />} />
+              <Route index element={<Navigate to="/wevisa/dashboard" replace />} />
+              <Route path="dashboard" element={<WeVisaDashboardPage />} />
+              <Route path="crm" element={<WeVisaCRMPage />} />
+              <Route path="apply" element={<WeVisaApplyPage />} />
+              <Route path="dummy-tickets" element={<WeVisaDummyTicketsPage />} />
+              <Route path="usa-appointment" element={<WeVisaUSAAppointmentPage />} />
+              <Route path="schengen" element={<WeVisaSchengenPage />} />
+              <Route path="invoice" element={<WeVisaInvoicePage />} />
+              <Route path="profile" element={<WeVisaProfilePage />} />
             </Route>
 
             {/* Catch-all → redirect unknown routes to dashboard */}
