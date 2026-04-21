@@ -1,4 +1,4 @@
-// src/App.jsx — Complete routing: Admin Panel (dark) + WeVisa Agent Portal (light)
+// src/App.jsx — Complete routing: Landing Page (public) + Admin Panel (dark) + WeVisa Agent Portal (light)
 import React, { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -9,7 +9,10 @@ import useAuthStore from '@/store/authStore'
 import useWeVisaStore from '@/store/wevisaStore'
 import { initSocket } from '@/services/socket'
 
-// ─── Admin Panel (VisaAI Pro — dark theme, company/admin use) ─
+// ─── Public Landing Page ───────────────────────────────────────
+import LandingPage from '@/components/pages/LandingPage'
+
+// ─── Admin Panel (VisaAI Pro — dark theme, company/admin use) ──
 import DashboardLayout     from '@/components/layout/DashboardLayout'
 import LoginPage           from '@/components/pages/LoginPage'
 import DashboardPage       from '@/components/pages/DashboardPage'
@@ -25,7 +28,7 @@ import KnowledgePage       from '@/components/pages/KnowledgePage'
 import AnalyticsPage       from '@/components/pages/AnalyticsPage'
 import SettingsPage        from '@/components/pages/SettingsPage'
 import CRMPage             from '@/components/pages/CRMPage'
-import WeVisaManagePage    from '@/components/pages/WeVisaManagePage'  // ← WeVisa management inside admin
+import WeVisaManagePage    from '@/components/pages/WeVisaManagePage'
 
 // ─── WeVisa B2B Agent Portal (light theme, agent use at /wevisa) ─
 import WeVisaLandingPage        from '@/components/wevisa/WeVisaLandingPage'
@@ -74,13 +77,22 @@ export default function App() {
         <AnimatePresence mode="wait">
           <Routes>
 
+            {/* ══════ PUBLIC LANDING PAGE ══════
+                - Accessible to everyone at /
+                - No auth required
+            */}
+            <Route path="/" element={<LandingPage />} />
+
             {/* ══════ ADMIN PANEL ══════
                 - Login at /login  (company admin, dark theme)
-                - Dashboard at /   (VisaAI Pro SaaS panel)
-                - Includes WeVisa platform management at /wevisa-manage
+                - Dashboard at /dashboard  (VisaAI Pro SaaS panel)
+                - Includes WeVisa platform management at /dashboard/wevisa-manage
             */}
-            <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />} />
-            <Route path="/" element={<AdminRoute><DashboardLayout /></AdminRoute>}>
+            <Route
+              path="/login"
+              element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />}
+            />
+            <Route path="/dashboard" element={<AdminRoute><DashboardLayout /></AdminRoute>}>
               <Route index                  element={<DashboardPage />} />
               <Route path="leads"           element={<LeadsPage />} />
               <Route path="contacts"        element={<ContactsPage />} />
@@ -122,7 +134,9 @@ export default function App() {
               <Route path="profile"          element={<WeVisaProfilePage />} />
             </Route>
 
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {/* Catch-all → redirect unknown routes to dashboard */}
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+
           </Routes>
         </AnimatePresence>
       </BrowserRouter>
