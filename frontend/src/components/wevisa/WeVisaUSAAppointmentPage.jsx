@@ -1,30 +1,30 @@
-// src/components/wevisa/WeVisaUSAAppointmentPage.jsx
+// src/components/wevisa/WeVisaUSAAppointmentPage.jsx — Dynamic pricing from admin
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
-import { wevisaServicesAPI } from '@/services/wevisaApi'
+import { wevisaServicesAPI, publicAPI } from '@/services/wevisaApi'
 
 const ii  = { color:'#111827', backgroundColor:'#f9fafb', caretColor:'#111827' }
 const inp = 'w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-colors'
 const lbl = 'block text-xs font-bold text-gray-600 mb-1.5'
 
-const TYPES = [
-  {id:'pan_india',     label:'Pan India (Multi City)', desc:'Available across all VFS centers in India', price:35000, timeframe:'Within 30 Days',   badge:'Most Popular', bc:'bg-blue-100 text-blue-700',   features:['All major cities','Multiple VFS centers','Flexible scheduling']},
-  {id:'state_specific',label:'State Specific',         desc:'Choose your preferred state location',      price:25000, timeframe:'Within 3-4 Weeks',  badge:'Recommended',  bc:'bg-green-100 text-green-700', features:['State-level priority','Faster processing','Dedicated slots']},
-  {id:'city_specific', label:'City Specific',          desc:'Book for your specific city',               price:20000, timeframe:'Within 3-4 Weeks',  badge:'Basic',        bc:'bg-gray-100 text-gray-600',   features:['Your city only','Standard booking','Available slots']},
+const NOTES = [
+  'Appointment booking subject to availability at US Embassy/Consulate',
+  'Full payment required to secure your appointment slot',
+  'Passport and required documents must be ready before booking',
+  'Our team will assist with the entire application process',
+  'Cancellation: 50% refund if cancelled 7 days prior to booking',
 ]
-const NOTES=['Appointment booking subject to availability at US Embassy/Consulate','Full payment required to secure your appointment slot','Passport and required documents must be ready before booking','Our team will assist with the entire application process','Cancellation: 50% refund if cancelled 7 days prior to booking']
-const SCLR={pending:'bg-yellow-100 text-yellow-700',processing:'bg-blue-100 text-blue-700',booked:'bg-green-100 text-green-700',completed:'bg-gray-100 text-gray-600',cancelled:'bg-red-100 text-red-700'}
+const SCLR = {pending:'bg-yellow-100 text-yellow-700',processing:'bg-blue-100 text-blue-700',booked:'bg-green-100 text-green-700',completed:'bg-gray-100 text-gray-600',cancelled:'bg-red-100 text-red-700'}
 
-function AppForm({type,onBack}) {
+function AppForm({ type, onBack }) {
   const [f,setF] = useState({applicantName:'',applicantEmail:'',applicantPhone:'',locationType:type.id,usVisaUsername:'',usVisaPassword:'',state:'',city:'',sq1:'',sq1a:'',sq2:'',sq2a:''})
   const qc = useQueryClient()
   const m = useMutation({
-    mutationFn:()=>wevisaServicesAPI.createUSAAppointment({...f,price:type.price,timeframe:type.timeframe}),
-    onSuccess:()=>{qc.invalidateQueries(['wv-usa-appts']);toast.success('🇺🇸 USA Appointment submitted!');onBack()},
+    mutationFn: () => wevisaServicesAPI.createUSAAppointment({ ...f, price: type.price, timeframe: type.timeframe }),
+    onSuccess: () => { qc.invalidateQueries(['wv-usa-appts']); toast.success('🇺🇸 USA Appointment submitted!'); onBack() },
   })
-
   return (
     <div className="max-w-2xl mx-auto p-4 lg:p-6">
       <button onClick={onBack} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-4 transition-colors">← Back to Options</button>
@@ -35,9 +35,8 @@ function AppForm({type,onBack}) {
         </div>
       </div>
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 space-y-6">
-        {/* Personal */}
         <div>
-          <h3 className="font-bold text-gray-800 text-base mb-4 flex items-center gap-2">👤 Your Information</h3>
+          <h3 className="font-bold text-gray-800 text-base mb-4">👤 Your Information</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div><label className={lbl}>Full Name *</label><input value={f.applicantName} onChange={e=>setF({...f,applicantName:e.target.value})} className={inp} style={ii} placeholder="John Doe"/></div>
             <div><label className={lbl}>Email</label><input value={f.applicantEmail} onChange={e=>setF({...f,applicantEmail:e.target.value})} className={inp} style={ii} placeholder="your@email.com"/></div>
@@ -60,10 +59,8 @@ function AppForm({type,onBack}) {
             </div>
           )}
         </div>
-
-        {/* Documents */}
         <div>
-          <h3 className="font-bold text-gray-800 text-base mb-4 flex items-center gap-2">📄 Upload Documents</h3>
+          <h3 className="font-bold text-gray-800 text-base mb-4">📄 Upload Documents</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {['Passport Front Page','Passport Back Page'].map(doc=>(
               <div key={doc}>
@@ -77,19 +74,15 @@ function AppForm({type,onBack}) {
             ))}
           </div>
         </div>
-
-        {/* Credentials */}
         <div>
-          <h3 className="font-bold text-gray-800 text-base mb-4 flex items-center gap-2">🔑 US Visa Login Credentials</h3>
+          <h3 className="font-bold text-gray-800 text-base mb-4">🔑 US Visa Login Credentials</h3>
           <div className="space-y-3">
             <div><label className={lbl}>Username</label><input value={f.usVisaUsername} onChange={e=>setF({...f,usVisaUsername:e.target.value})} className={inp} style={ii} placeholder="Your US visa portal username"/></div>
             <div><label className={lbl}>Password</label><input type="password" value={f.usVisaPassword} onChange={e=>setF({...f,usVisaPassword:e.target.value})} className={inp} style={ii} placeholder="••••••••"/></div>
           </div>
         </div>
-
-        {/* Security Questions */}
         <div>
-          <h3 className="font-bold text-gray-800 text-base mb-4 flex items-center gap-2">🔒 Security Questions</h3>
+          <h3 className="font-bold text-gray-800 text-base mb-4">🔒 Security Questions</h3>
           {[{num:1,q:'sq1',a:'sq1a'},{num:2,q:'sq2',a:'sq2a'}].map(sq=>(
             <div key={sq.num} className="bg-gray-50 rounded-2xl p-4 border border-gray-100 mb-3">
               <div className="font-semibold text-sm text-gray-700 mb-3">Security Question {sq.num}</div>
@@ -100,10 +93,9 @@ function AppForm({type,onBack}) {
             </div>
           ))}
         </div>
-
         <button onClick={()=>m.mutate()} disabled={!f.applicantName||m.isPending}
           className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-extrabold text-base hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 shadow-xl transition-all">
-          {m.isPending?'Submitting...`':'🇺🇸 Submit USA Appointment — ₹'+type.price.toLocaleString()}
+          {m.isPending?'Submitting...':'🇺🇸 Submit USA Appointment — ₹'+type.price.toLocaleString()}
         </button>
       </div>
     </div>
@@ -112,19 +104,36 @@ function AppForm({type,onBack}) {
 
 export default function WeVisaUSAAppointmentPage() {
   const [sel,setSel] = useState(null)
-  const {data:appts=[]} = useQuery({queryKey:['wv-usa-appts'],queryFn:()=>wevisaServicesAPI.getUSAAppointments().then(r=>r.data.data||[])})
 
-  if(sel) return <AppForm type={sel} onBack={()=>setSel(null)}/>
+  // ── Pricing from admin panel ──
+  const { data: pricing = {} } = useQuery({
+    queryKey: ['usa-pricing-agent'],
+    queryFn:  () => publicAPI.getUSAPricing().then(r => r.data.data || {}).catch(() => ({})),
+    staleTime: 60000,
+  })
+  const { data: appts = [] } = useQuery({
+    queryKey: ['wv-usa-appts'],
+    queryFn: () => wevisaServicesAPI.getUSAAppointments().then(r => r.data.data || []),
+  })
+
+  const TYPES = [
+    { id:'pan_india',      label:'Pan India (Multi City)', desc:'Available across all VFS centers in India', price: pricing.pan_india||35000,      timeframe: pricing.timeframe||'Within 30 Days',   badge:'Most Popular', bc:'bg-blue-100 text-blue-700',   features:['All major cities','Multiple VFS centers','Flexible scheduling']},
+    { id:'state_specific', label:'State Specific',         desc:'Choose your preferred state location',      price: pricing.state_specific||25000,  timeframe: pricing.timeframe||'Within 3-4 Weeks', badge:'Recommended',  bc:'bg-green-100 text-green-700', features:['State-level priority','Faster processing','Dedicated slots']},
+    { id:'city_specific',  label:'City Specific',          desc:'Book for your specific city',               price: pricing.city_specific||20000,   timeframe: pricing.timeframe||'Within 3-4 Weeks', badge:'Basic',        bc:'bg-gray-100 text-gray-600',   features:['Your city only','Standard booking','Available slots']},
+  ]
+
+  if (sel) return <AppForm type={sel} onBack={()=>setSel(null)}/>
 
   return (
     <div className="p-4 lg:p-6">
       <div className="mb-6">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-xs px-2.5 py-1 rounded-full bg-green-100 text-green-700 font-bold">15% OFF</span>
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
+          {pricing.discount && <span className="text-xs px-2.5 py-1 rounded-full bg-green-100 text-green-700 font-bold">{pricing.discount}</span>}
           <span className="text-xs px-2.5 py-1 rounded-full bg-orange-100 text-orange-600 font-bold">🔥 Trending</span>
         </div>
-        <h2 className="font-extrabold text-2xl sm:text-3xl text-gray-800 mt-2">USA Early Appointment</h2>
-        <p className="text-gray-500 mt-1">Priority slot booking for USA visa appointments within 2 weeks</p>
+        <h2 className="font-extrabold text-2xl sm:text-3xl text-gray-800 mt-2">🇺🇸 USA Early Appointment</h2>
+        <p className="text-gray-500 mt-1">{pricing.description||'Priority slot booking for USA visa appointments within 2 weeks'}</p>
+        <p className="text-xs text-gray-400 mt-1">Prices updated by admin — always current</p>
       </div>
 
       <h3 className="font-bold text-gray-700 text-center text-xl mb-6">Select Appointment Location Type</h3>
@@ -150,9 +159,8 @@ export default function WeVisaUSAAppointmentPage() {
         ))}
       </div>
 
-      {/* Important info */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-8">
-        <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">⚠️ Important Information</h3>
+        <h3 className="font-bold text-gray-800 mb-4">⚠️ Important Information</h3>
         <ul className="space-y-2">
           {NOTES.map(n=>(
             <li key={n} className="flex items-start gap-2 text-sm text-gray-600"><span className="text-blue-400 mt-0.5 flex-shrink-0">•</span>{n}</li>
@@ -160,7 +168,6 @@ export default function WeVisaUSAAppointmentPage() {
         </ul>
       </div>
 
-      {/* My appointments */}
       {appts.length>0&&(
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
           <div className="px-6 py-4 border-b border-gray-100"><h3 className="font-bold text-gray-800">📋 My USA Appointments ({appts.length})</h3></div>

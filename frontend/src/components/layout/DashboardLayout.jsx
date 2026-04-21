@@ -1,4 +1,4 @@
-// src/components/layout/DashboardLayout.jsx — Admin Panel (dark theme)
+// src/components/layout/DashboardLayout.jsx — Admin Panel with WeVisa Manage section
 import React, { useEffect } from 'react'
 import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -10,6 +10,7 @@ import useUIStore from '@/store/uiStore'
 import { getSocket } from '@/services/socket'
 
 const NAV = [
+  // ── VisaAI Pro CRM ──
   { path: '/', label: 'Dashboard', icon: '⚡', exact: true },
   null,
   { path: '/leads',    label: 'Leads',    icon: '👥', badge: 'leads' },
@@ -18,12 +19,16 @@ const NAV = [
   { path: '/calendar', label: 'Calendar', icon: '📅' },
   { path: '/crm',      label: 'CRM',      icon: '🔗' },
   null,
-  { path: '/chatbot',      label: 'WhatsApp Bot',  icon: '💬', badge: 'live' },
-  { path: '/voice',        label: 'Voice Bot',     icon: '📞' },
-  { path: '/ocr',          label: 'Document OCR',  icon: '🔍' },
-  { path: '/ai-assistant', label: 'AI Assistant',  icon: '🤖' },
+  // ── AI Tools ──
+  { path: '/chatbot',      label: 'WhatsApp Bot',   icon: '💬', badge: 'live' },
+  { path: '/voice',        label: 'Voice Bot',      icon: '📞' },
+  { path: '/ocr',          label: 'Document OCR',   icon: '🔍' },
+  { path: '/ai-assistant', label: 'AI Assistant',   icon: '🤖' },
   { path: '/knowledge',    label: 'Knowledge Base', icon: '📚' },
-  { path: '/analytics',    label: 'Analytics',     icon: '📊' },
+  { path: '/analytics',    label: 'Analytics',      icon: '📊' },
+  null,
+  // ── WeVisa B2B Manage ──
+  { path: '/wevisa-manage', label: 'WeVisa Manage', icon: '🌐', section: 'WeVisa Platform' },
   null,
   { path: '/settings', label: 'Settings', icon: '⚙️' },
 ]
@@ -37,28 +42,19 @@ export default function DashboardLayout() {
     const socket = getSocket()
     if (!socket) return
     const handlers = {
-      'lead:new': (lead) => {
-        toast.success(`New lead: ${lead.name}`, { icon: '👤' })
-        addActivity({ type: 'whatsapp', title: `New lead — ${lead.name}`, detail: `${lead.visaType} • ${lead.destination || 'N/A'}` })
-      },
-      'call:started': (call) => {
-        addActivity({ type: 'voice', title: 'Call started', detail: `${call.type} • ${call.toNumber || call.fromNumber}` })
-      },
-      'ocr:complete': (doc) => {
-        toast.success('Document processed!', { icon: '📄' })
-        addActivity({ type: 'doc', title: 'Document OCR complete', detail: doc.originalName })
-      },
-      'message:new': (msg) => {
-        addActivity({ type: 'whatsapp', title: 'New WhatsApp message', detail: msg.preview || 'Incoming message' })
-      },
+      'lead:new':     (l)   => { toast.success(`New lead: ${l.name}`, { icon: '👤' }); addActivity({ type: 'whatsapp', title: `New lead — ${l.name}`, detail: `${l.visaType} • ${l.destination || 'N/A'}` }) },
+      'call:started': (c)   => addActivity({ type: 'voice', title: 'Call started', detail: `${c.type} • ${c.toNumber || c.fromNumber}` }),
+      'ocr:complete': (doc) => { toast.success('Document processed!', { icon: '📄' }); addActivity({ type: 'doc', title: 'Document OCR complete', detail: doc.originalName }) },
+      'message:new':  (msg) => addActivity({ type: 'whatsapp', title: 'New WhatsApp message', detail: msg.preview || 'Incoming message' }),
     }
     Object.entries(handlers).forEach(([e, fn]) => socket.on(e, fn))
     return () => Object.entries(handlers).forEach(([e, fn]) => socket.off(e, fn))
   }, [])
 
-  const pageTitle = NAV.filter(Boolean).find(n =>
+  const currentNav = NAV.filter(Boolean).find(n =>
     n.exact ? location.pathname === n.path : location.pathname.startsWith(n.path) && n.path !== '/'
-  )?.label || 'Dashboard'
+  )
+  const pageTitle = currentNav?.label || 'Dashboard'
 
   return (
     <div className="flex min-h-screen bg-bg">
@@ -83,6 +79,24 @@ export default function DashboardLayout() {
         <div className="flex-1 overflow-y-auto py-3">
           {NAV.map((item, i) => {
             if (!item) return <div key={i} className="mx-4 my-2 border-t border-[rgba(255,255,255,0.05)]" />
+
+            // Section label
+            if (item.section) {
+              return (
+                <div key={item.path}>
+                  <div className="px-6 pt-1 pb-1">
+                    <span className="text-[9px] font-bold text-[var(--text3)] uppercase tracking-widest">{item.section}</span>
+                  </div>
+                  <NavLink to={item.path} className={clsx('nav-item', location.pathname.startsWith(item.path) && 'active')}>
+                    {location.pathname.startsWith(item.path) && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-blue-400 rounded-r" />}
+                    <span className="text-base w-5 text-center flex-shrink-0">{item.icon}</span>
+                    <span className="flex-1">{item.label}</span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 font-bold">Manage</span>
+                  </NavLink>
+                </div>
+              )
+            }
+
             const isActive = item.exact
               ? location.pathname === item.path
               : location.pathname.startsWith(item.path)
@@ -91,15 +105,21 @@ export default function DashboardLayout() {
                 {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-[var(--red)] rounded-r" />}
                 <span className="text-base w-5 text-center flex-shrink-0">{item.icon}</span>
                 <span className="flex-1">{item.label}</span>
-                {item.badge === 'live' && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">Live</span>
-                )}
-                {item.badge === 'leads' && (
-                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-[var(--red)] text-white">24</span>
-                )}
+                {item.badge === 'live' && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">Live</span>}
+                {item.badge === 'leads' && <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-[var(--red)] text-white">24</span>}
               </NavLink>
             )
           })}
+        </div>
+
+        {/* WeVisa Agent Portal link */}
+        <div className="px-3 pb-2">
+          <a href="/wevisa" target="_blank" rel="noreferrer"
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold hover:bg-blue-500/20 transition-all">
+            <span>🌐</span>
+            <span className="flex-1">WeVisa Agent Portal</span>
+            <span className="text-[10px] opacity-60">↗</span>
+          </a>
         </div>
 
         {/* User footer */}
@@ -155,9 +175,7 @@ export default function DashboardLayout() {
         </main>
       </div>
 
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={toggleSidebar} />
-      )}
+      {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={toggleSidebar} />}
     </div>
   )
 }
