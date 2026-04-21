@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { PageHeader, MetricCard, StatusBadge, Spinner, EmptyState } from '@/components/ui'
-import { wevisaAdminAPI, adminApi } from '@/services/wevisaApi'
+import { wevisaAdminAPI } from '@/services/wevisaApi'
 
 const REGIONS    = ['Asia','Europe','Americas','Africa','Oceania','Middle East']
 const CATEGORIES = ['evisa','sticker','on_arrival','appointment','free']
