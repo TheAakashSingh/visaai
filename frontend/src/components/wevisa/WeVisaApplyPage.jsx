@@ -27,6 +27,87 @@ const FALLBACK = [
   {_id:'fb12',countryName:'Malaysia',            countryFlag:'🇲🇾',visaType:'eVisa',  processingTime:'3-5 Days',stayDuration:'30 Days', price:1999, isExpress:false,category:'evisa'},
 ]
 
+function ViewDetailsModal({ pkg, onClose, onApply }) {
+  if (!pkg) return null
+  return (
+    <div className="fixed inset-0 z-[400] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}/>
+      <motion.div initial={{opacity:0,scale:.95,y:20}} animate={{opacity:1,scale:1,y:0}} className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg z-10 overflow-hidden">
+        <div className="bg-gradient-to-r from-blue-700 to-blue-600 px-6 py-5 text-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-4xl">{pkg.countryFlag||pkg.flag||'🌍'}</span>
+              <div>
+                <div className="font-extrabold text-xl">{pkg.countryName||pkg.country}</div>
+                <div className="text-blue-200 text-sm">{pkg.visaType} Visa</div>
+              </div>
+            </div>
+            <button onClick={onClose} className="text-white/70 hover:text-white text-2xl">×</button>
+          </div>
+        </div>
+        <div className="p-6 space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+              <div className="text-[10px] text-gray-400 font-bold uppercase">Processing Time</div>
+              <div className="text-sm font-bold text-green-600 mt-1">{pkg.processingTime}</div>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+              <div className="text-[10px] text-gray-400 font-bold uppercase">Stay Duration</div>
+              <div className="text-sm font-bold text-gray-700 mt-1">{pkg.stayDuration}</div>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+              <div className="text-[10px] text-gray-400 font-bold uppercase">Entries</div>
+              <div className="text-sm font-bold text-gray-700 mt-1 capitalize">{pkg.entries}</div>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+              <div className="text-[10px] text-gray-400 font-bold uppercase">Validity</div>
+              <div className="text-sm font-bold text-gray-700 mt-1">{pkg.validity||'N/A'}</div>
+            </div>
+          </div>
+          
+          <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-xl p-4 border border-blue-100">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-gray-500 text-sm">Selling Price</span>
+              <span className="font-extrabold text-2xl text-blue-700">₹{pkg.price?.toLocaleString()}</span>
+            </div>
+            {pkg.commission>0&&(
+              <div className="flex items-center justify-between pt-2 border-t border-blue-200">
+                <span className="text-gray-500 text-sm">Your Commission</span>
+                <span className="font-bold text-green-600">₹{pkg.commission?.toLocaleString()}</span>
+              </div>
+            )}
+          </div>
+
+          {pkg.description&&(
+            <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-100">
+              <div className="text-xs font-bold text-yellow-700 mb-2">📝 Description</div>
+              <div className="text-sm text-gray-700">{pkg.description}</div>
+            </div>
+          )}
+
+          {pkg.importantNotes&&pkg.importantNotes.length>0&&(
+            <div className="bg-red-50 rounded-xl p-4 border border-red-100">
+              <div className="text-xs font-bold text-red-700 mb-2">⚠️ Important Notes</div>
+              <ul className="space-y-1">
+                {pkg.importantNotes.map((note,i)=>(
+                  <li key={i} className="text-xs text-gray-700 flex items-start gap-2">
+                    <span className="text-red-500 mt-0.5">•</span>{note}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-2">
+            <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-semibold hover:border-gray-300">Close</button>
+            <button onClick={()=>{onClose();onApply(pkg)}} className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-md">Apply Now →</button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
 function ApplyModal({ pkg, onClose }) {
   const [step,setStep] = useState(1)
   const [f,setF] = useState({ applicantName:'',applicantEmail:'',applicantPhone:'',passportNumber:'',travelDate:'',returnDate:'',numberOfApplicants:1,notes:'' })
@@ -109,6 +190,7 @@ export default function WeVisaApplyPage() {
   const [search,setSearch]  = useState('')
   const [filter,setFilter]  = useState('all')
   const [sel,setSel]        = useState(null)
+  const [viewPkg,setViewPkg] = useState(null)
 
   // ── ALL PACKAGES FROM ADMIN DB — dynamic ──
   const { data: packagesData = [] } = useQuery({
@@ -201,9 +283,12 @@ export default function WeVisaApplyPage() {
                     </div>
                   )}
                 </div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <div className="font-extrabold text-blue-700 text-base sm:text-lg">₹{pkg.price?.toLocaleString()}</div>
-                  <button onClick={()=>setSel(pkg)} className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-all shadow group-hover:shadow-md">Apply →</button>
+                  <div className="flex gap-1">
+                    <button onClick={()=>setViewPkg(pkg)} className="px-2 py-1.5 sm:px-3 sm:py-1.5 rounded-lg border border-gray-200 text-gray-500 text-[10px] sm:text-xs font-semibold hover:border-blue-400 hover:text-blue-600 transition-all" title="View Details">👁 Details</button>
+                    <button onClick={()=>setSel(pkg)} className="px-2 py-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-blue-600 text-white text-[10px] sm:text-xs font-bold hover:bg-blue-700 transition-all shadow">Apply</button>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -233,6 +318,7 @@ export default function WeVisaApplyPage() {
       )}
 
       {sel&&<ApplyModal pkg={sel} onClose={()=>setSel(null)}/>}
+      {viewPkg&&<ViewDetailsModal pkg={viewPkg} onClose={()=>setViewPkg(null)} onApply={(p)=>{setViewPkg(null);setSel(p)}}/>}
     </div>
   )
 }

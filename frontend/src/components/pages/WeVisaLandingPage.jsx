@@ -1,12 +1,13 @@
-// src/components/wevisa/WeVisaLandingPage.jsx
+// src/components/pages/WeVisaLandingPage.jsx - Dynamic landing page connected to admin API
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { publicAPI } from '@/services/wevisaApi'
 
-/* ─── Data ─────────────────────────────────────────────────── */
 const DESTINATIONS = ['Dubai', 'Singapore', 'USA', 'Thailand', 'Malaysia', 'Canada', 'UK', 'Australia', 'Vietnam', 'Bali']
 
-const TRENDING = [
+const FALLBACK_TRENDING = [
   { name: 'Dubai', flag: '🇦🇪', count: '200K+', img: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=600&q=80', price: '₹236', processing: '4 Hours' },
   { name: 'Vietnam', flag: '🇻🇳', count: '74K+', img: 'https://images.unsplash.com/photo-1528127269322-539801943592?w=600&q=80', price: '₹899', processing: '2 Hours' },
   { name: 'USA', flag: '🇺🇸', count: '61K+', img: 'https://images.unsplash.com/photo-1485738422979-f5c462d49f74?w=600&q=80', price: 'On Request', processing: '14 Days' },
@@ -14,13 +15,19 @@ const TRENDING = [
   { name: 'Australia', flag: '🇦🇺', count: '52K+', img: 'https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=600&q=80', price: '₹5,200', processing: '15 Days' },
 ]
 
-const EXPRESS = [
+const FALLBACK_EXPRESS = [
   { country: 'Dubai', flag: '🇦🇪', processing: '4 Hours', stay: '30 Days', img: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=400&q=75' },
   { country: 'Singapore', flag: '🇸🇬', processing: '24 Hours', stay: '30 Days', img: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=400&q=75' },
   { country: 'Vietnam', flag: '🇻🇳', processing: '2 Hours', stay: '30 Days', img: 'https://images.unsplash.com/photo-1528127269322-539801943592?w=400&q=75' },
   { country: 'Bali', flag: '🇮🇩', processing: '24 Hours', stay: '30 Days', img: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&q=75' },
   { country: 'Turkey', flag: '🇹🇷', processing: '24 Hours', stay: '90 Days', img: 'https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?w=400&q=75' },
   { country: 'Thailand', flag: '🇹🇭', processing: '12 Hours', stay: '60 Days', img: 'https://images.unsplash.com/photo-1512100356356-de1b84283e18?w=400&q=75' },
+]
+
+const FALLBACK_NEWS = [
+  { date: 'Apr 16, 2026', title: 'New Visa Rules for Schengen Countries in 2026', desc: 'Important changes to processing times and requirements every agent should know.', tags: ['Schengen', 'Europe'], img: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=500&q=75' },
+  { date: 'Apr 15, 2026', title: 'Top 10 Documents Needed for US Tourist Visa', desc: 'A comprehensive checklist for your clients B1/B2 visa interviews.', tags: ['USA', 'Documents'], img: 'https://images.unsplash.com/photo-1485738422979-f5c462d49f74?w=500&q=75' },
+  { date: 'Apr 14, 2026', title: 'How to Track Your Visa Application Status', desc: 'Step-by-step guide using our platform to keep clients updated in real time.', tags: ['Guide', 'Tips'], img: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=500&q=75' },
 ]
 
 const TOOLS = [
@@ -41,12 +48,6 @@ const TESTIMONIALS = [
   { name: 'Lakshmi Nair', city: 'Kochi', years: 2, text: 'WeVisa helps bring international tourists to Kerala with truly minimal visa hassle for everyone.' },
   { name: 'Suresh Kumar', city: 'Chennai', years: 2, text: 'Best B2B platform in India. CRM tools and invoice system help us manage clients like pros.' },
   { name: 'Meera Joshi', city: 'Pune', years: 1, text: 'Earning great commission on every visa. The agent dashboard makes tracking so simple and clear.' },
-]
-
-const NEWS = [
-  { date: 'Apr 16, 2026', title: 'New Visa Rules for Schengen Countries in 2026', desc: 'Important changes to processing times and requirements every agent should know.', tags: ['Schengen', 'Europe'], img: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=500&q=75' },
-  { date: 'Apr 15, 2026', title: 'Top 10 Documents Needed for US Tourist Visa', desc: 'A comprehensive checklist for your clients B1/B2 visa interviews.', tags: ['USA', 'Documents'], img: 'https://images.unsplash.com/photo-1485738422979-f5c462d49f74?w=500&q=75' },
-  { date: 'Apr 14, 2026', title: 'How to Track Your Visa Application Status', desc: 'Step-by-step guide using our platform to keep clients updated in real time.', tags: ['Guide', 'Tips'], img: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=500&q=75' },
 ]
 
 const NAV_TABS = [
@@ -74,10 +75,44 @@ export default function WeVisaLandingPage() {
   const [destIdx, setDestIdx] = useState(0)
   const [scrolled, setScrolled] = useState(false)
 
+  const { data: packagesData = [] } = useQuery({
+    queryKey: ['landing-packages'],
+    queryFn: () => publicAPI.getPackages().then(r => r.data.data || []).catch(() => []),
+    staleTime: 60000,
+  })
+
+  const { data: countriesData = [] } = useQuery({
+    queryKey: ['landing-countries'],
+    queryFn: () => publicAPI.getCountries().then(r => r.data.data || []).catch(() => []),
+    staleTime: 60000,
+  })
+
+  const trendingPackages = packagesData.length > 0 
+    ? packagesData.filter(p => p.isFeatured || p.isExpress).slice(0, 5)
+    : FALLBACK_TRENDING
+
+  const expressPackages = packagesData.length > 0
+    ? packagesData.filter(p => p.isExpress).slice(0, 6)
+    : FALLBACK_EXPRESS
+
+  const dynamicDestinations = countriesData.length > 0
+    ? countriesData.map(c => c.name)
+    : DESTINATIONS
+
+  const dynamicNews = packagesData.length > 0
+    ? packagesData.slice(0, 3).map((p, i) => ({
+        date: new Date(Date.now() - i * 86400000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        title: `${p.countryName || p.country} ${p.visaType} Visa - Now Available`,
+        desc: `Get your ${p.countryName || p.country} visa processed in ${p.processingTime}. Best rates for travel agents.`,
+        tags: [p.category || 'Visa'],
+        img: `https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=500&q=75`,
+      }))
+    : FALLBACK_NEWS
+
   useEffect(() => {
-    const t = setInterval(() => setDestIdx(i => (i + 1) % DESTINATIONS.length), 2400)
+    const t = setInterval(() => setDestIdx(i => (i + 1) % dynamicDestinations.length), 2400)
     return () => clearInterval(t)
-  }, [])
+  }, [dynamicDestinations])
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 8)
     window.addEventListener('scroll', fn)
@@ -85,7 +120,7 @@ export default function WeVisaLandingPage() {
   }, [])
   const handleSearch = v => {
     setSearchVal(v)
-    setSugg(v ? DESTINATIONS.filter(d => d.toLowerCase().includes(v.toLowerCase())) : [])
+    setSugg(v ? dynamicDestinations.filter(d => d.toLowerCase().includes(v.toLowerCase())) : [])
   }
 
   return (
@@ -344,7 +379,7 @@ export default function WeVisaLandingPage() {
                 animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                 exit={{ opacity: 0, y: -20, filter: 'blur(8px)' }}
                 transition={{ duration: 0.35 }}>
-                {DESTINATIONS[destIdx]}
+                {dynamicDestinations[destIdx]}
               </motion.span>
             </AnimatePresence>
             {' '}Visa Online
@@ -353,28 +388,28 @@ export default function WeVisaLandingPage() {
         </motion.div>
       </div>
 
-      {/* TRENDING */}
+      {/* TRENDING - Dynamic */}
       <section className="sec" style={{ paddingTop: 4 }}>
         <div className="sec-i">
           <div className="sec-hd">
             <div className="sec-ttl">Trending Countries</div>
-            <button className="sec-lnk">View All Countries →</button>
+            <Link to="/wevisa/apply"><button className="sec-lnk">View All Countries →</button></Link>
           </div>
           <div className="tr-grid">
-            {TRENDING.map((c, i) => (
-              <motion.div key={c.name} className="tr-card"
+            {trendingPackages.map((c, i) => (
+              <motion.div key={c._id || c.name} className="tr-card"
                 initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.12 + i * 0.09, duration: 0.5 }}>
-                <img src={c.img} alt={c.name} className="tr-img" loading="lazy" />
+                <img src={c.imageUrl || c.img || `https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=600&q=80`} alt={c.name || c.countryName} className="tr-img" loading="lazy" />
                 <div className="tr-ovl" />
-                <div className="tr-badge">{c.count} Visas Processed</div>
+                <div className="tr-badge">{c.processedCount || c.count || '10K+'} Visas Processed</div>
                 <div className="tr-btm">
-                  <div className="tr-name">{c.flag} {c.name}</div>
+                  <div className="tr-name">{c.flag || c.countryFlag || '🌍'} {c.name || c.countryName}</div>
                   <div className="tr-row">
-                    <span className="tr-price">From {c.price}</span>
-                    <span className="tr-proc">{c.processing}</span>
+                    <span className="tr-price">From ₹{c.price?.toLocaleString() || c.price || 'On Request'}</span>
+                    <span className="tr-proc">{c.processingTime || c.processing || '24 Hours'}</span>
                   </div>
-                  <button className="tr-apply">Apply Now</button>
+                  <Link to="/wevisa/apply"><button className="tr-apply">Apply Now</button></Link>
                 </div>
               </motion.div>
             ))}
@@ -382,7 +417,7 @@ export default function WeVisaLandingPage() {
         </div>
       </section>
 
-      {/* EXPRESS */}
+      {/* EXPRESS - Dynamic */}
       <section className="sec bg2">
         <div className="sec-i">
           <div className="sec-hd">
@@ -390,20 +425,20 @@ export default function WeVisaLandingPage() {
               <div className="sec-eye">⚡ Fast Track</div>
               <div className="sec-ttl">Express Visa Processing</div>
             </div>
-            <button className="sec-lnk">View All →</button>
+            <Link to="/wevisa/apply"><button className="sec-lnk">View All →</button></Link>
           </div>
           <div className="ex-grid">
-            {EXPRESS.map((v, i) => (
-              <motion.div key={v.country} className="ex-card"
+            {expressPackages.map((v, i) => (
+              <motion.div key={v._id || v.country} className="ex-card"
                 initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }} transition={{ delay: i * 0.07, duration: 0.4 }}>
-                <img src={v.img} alt={v.country} className="ex-img" loading="lazy" />
+                <img src={v.imageUrl || v.img || `https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400&q=75`} alt={v.country} className="ex-img" loading="lazy" />
                 <div className="ex-ovl" />
                 <div className="ex-con">
-                  <span className="ex-fl">{v.flag}</span>
-                  <div className="ex-nm">{v.country}</div>
-                  <div className="ex-pr">⚡ {v.processing}</div>
-                  <div className="ex-st">Stay: {v.stay}</div>
+                  <span className="ex-fl">{v.flag || v.countryFlag || '🌍'}</span>
+                  <div className="ex-nm">{v.countryName || v.country}</div>
+                  <div className="ex-pr">⚡ {v.processingTime || v.processing || '24 Hours'}</div>
+                  <div className="ex-st">Stay: {v.stayDuration || v.stay || '30 Days'}</div>
                 </div>
               </motion.div>
             ))}
@@ -417,13 +452,13 @@ export default function WeVisaLandingPage() {
           <div className="sec-hd">
             <div>
               <div className="sec-eye">Why WeVisa</div>
-              <div className="sec-ttl">Trusted by 1000+ Travel Agents</div>
+              <div className="sec-ttl">Trusted by {countriesData.length > 0 ? countriesData.length * 10 : '1000+'}+ Travel Agents</div>
             </div>
           </div>
           <div className="why-grid">
             {[
               { ic: '💰', val: '₹500+', lbl: 'Commission per visa' },
-              { ic: '🌍', val: '100+', lbl: 'Countries covered' },
+              { ic: '🌍', val: `${countriesData.length > 0 ? countriesData.length : '100'}+`, lbl: 'Countries covered' },
               { ic: '🤝', val: '1000+', lbl: 'Partner agents' },
               { ic: '✅', val: '99.3%', lbl: 'Approval rate' },
             ].map((w, i) => (
@@ -492,7 +527,7 @@ export default function WeVisaLandingPage() {
         </div>
       </section>
 
-      {/* NEWS */}
+      {/* NEWS - Dynamic */}
       <section className="sec bg2">
         <div className="sec-i">
           <div className="sec-hd">
@@ -503,8 +538,8 @@ export default function WeVisaLandingPage() {
             <button className="sec-lnk">View All →</button>
           </div>
           <div className="nw-grid">
-            {NEWS.map((n, i) => (
-              <motion.div key={n.title} className="nw-card"
+            {dynamicNews.map((n, i) => (
+              <motion.div key={i} className="nw-card"
                 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.45 }}>
                 <div className="nw-imgw"><img src={n.img} alt={n.title} className="nw-img" loading="lazy" /></div>
