@@ -1,347 +1,584 @@
-// src/components/pages/WeVisaLandingPage.jsx
-import React, { useState } from 'react'
-import { motion } from 'framer-motion'
+// src/components/wevisa/WeVisaLandingPage.jsx
+import React, { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 
-const COUNTRIES = [
-  { name: 'Canada', flag: '🇨🇦', packages: 1, price: '₹1,180', desc: 'Canada visa services - Tourist, Business, and Student visas available' },
-  { name: 'United Arab Emirates', flag: '🇦🇪', packages: 2, price: '₹236', desc: 'UAE visa services - Tourist, Business, and Work visas available' },
-  { name: 'United States', flag: '🇺🇸', packages: 0, price: null, desc: 'USA visa services - Tourist, Business, Student, and Work visas available' },
+/* ─── Data ─────────────────────────────────────────────────── */
+const DESTINATIONS = ['Dubai', 'Singapore', 'USA', 'Thailand', 'Malaysia', 'Canada', 'UK', 'Australia', 'Vietnam', 'Bali']
+
+const TRENDING = [
+  { name: 'Dubai', flag: '🇦🇪', count: '200K+', img: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=600&q=80', price: '₹236', processing: '4 Hours' },
+  { name: 'Vietnam', flag: '🇻🇳', count: '74K+', img: 'https://images.unsplash.com/photo-1528127269322-539801943592?w=600&q=80', price: '₹899', processing: '2 Hours' },
+  { name: 'USA', flag: '🇺🇸', count: '61K+', img: 'https://images.unsplash.com/photo-1485738422979-f5c462d49f74?w=600&q=80', price: 'On Request', processing: '14 Days' },
+  { name: 'Singapore', flag: '🇸🇬', count: '84K+', img: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=600&q=80', price: '₹1,450', processing: '24 Hours' },
+  { name: 'Australia', flag: '🇦🇺', count: '52K+', img: 'https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=600&q=80', price: '₹5,200', processing: '15 Days' },
 ]
 
-const EXPRESS_VISAS = [
-  { country: 'Dubai', flag: '🇦🇪', type: 'eVisa', processing: '4 Hours', stay: '30 Days' },
-  { country: 'Singapore', flag: '🇸🇬', type: 'eVisa', processing: '24 Hours', stay: '30 Days' },
-  { country: 'Vietnam', flag: '🇻🇳', type: 'eVisa', processing: '2 Hours', stay: '30 Days' },
-  { country: 'Bali', flag: '🇮🇩', type: 'eVisa', processing: '24 Hours', stay: '30 Days' },
-  { country: 'Turkey', flag: '🇹🇷', type: 'eVisa', processing: '24 Hours', stay: '90 Days' },
+const EXPRESS = [
+  { country: 'Dubai', flag: '🇦🇪', processing: '4 Hours', stay: '30 Days', img: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=400&q=75' },
+  { country: 'Singapore', flag: '🇸🇬', processing: '24 Hours', stay: '30 Days', img: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=400&q=75' },
+  { country: 'Vietnam', flag: '🇻🇳', processing: '2 Hours', stay: '30 Days', img: 'https://images.unsplash.com/photo-1528127269322-539801943592?w=400&q=75' },
+  { country: 'Bali', flag: '🇮🇩', processing: '24 Hours', stay: '30 Days', img: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400&q=75' },
+  { country: 'Turkey', flag: '🇹🇷', processing: '24 Hours', stay: '90 Days', img: 'https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?w=400&q=75' },
+  { country: 'Thailand', flag: '🇹🇭', processing: '12 Hours', stay: '60 Days', img: 'https://images.unsplash.com/photo-1512100356356-de1b84283e18?w=400&q=75' },
 ]
 
-const BUSINESS_TOOLS = [
-  { icon: '📊', title: 'CRM Dashboard', desc: 'Manage your customer relationships, leads, and business operations efficiently.' },
-  { icon: '🧾', title: 'Invoice Generator', desc: 'Create professional invoices for your travel and visa services.' },
-  { icon: '📅', title: 'USA Early Appointment', desc: 'Book early appointment slots for USA visa applications.' },
-  { icon: '🎫', title: 'Dummy Tickets', desc: 'Generate dummy flight tickets for visa applications and travel planning.' },
-  { icon: '🗓️', title: 'Schengen Appointments', desc: 'Schedule appointments for Schengen visa applications across European countries.' },
-  { icon: '🎨', title: 'Flyer Designer', desc: 'Design professional marketing flyers for your travel agency.' },
-  { icon: '📱', title: 'International SIM Cards', desc: 'Stay connected worldwide with our international SIM card solutions.' },
+const TOOLS = [
+  { icon: '📊', title: 'CRM Dashboard', desc: 'Manage clients, leads & operations from one place', path: '/wevisa/crm' },
+  { icon: '🧾', title: 'Invoice Generator', desc: 'GST-compliant invoices for visa & travel services', path: '/wevisa/invoice' },
+  { icon: '📅', title: 'USA Early Appointment', desc: 'Book early slots for US visa applications', path: '/wevisa/usa-appointment' },
+  { icon: '🎫', title: 'Dummy Tickets', desc: 'Instant dummy flight tickets for visa submissions', path: '/wevisa/dummy-tickets' },
+  { icon: '🗓️', title: 'Schengen Appointments', desc: 'Schedule appointments across European countries', path: '/wevisa/schengen' },
+  { icon: '🎨', title: 'Flyer Designer', desc: 'Create marketing flyers for your agency', path: '/wevisa/dashboard' },
+  { icon: '📱', title: 'International SIM', desc: 'Global SIM cards for your traveling clients', path: '/wevisa/dashboard' },
+  { icon: '📈', title: 'Analytics', desc: 'Track performance and commission earnings', path: '/wevisa/dashboard' },
 ]
 
 const TESTIMONIALS = [
-  { name: 'Rajiv Sharma', city: 'Mumbai', years: 3, text: 'WeVisa has transformed our business. The express visa service for Dubai is exceptional, our clients get approvals in just 4 hours!' },
-  { name: 'Priya Patel', city: 'Delhi', years: 2, text: 'Since partnering with WeVisa, our Singapore tour packages have seen a 40% increase in bookings. The 24-hour visa service is a game-changer!' },
-  { name: 'Anand Gupta', city: 'Bangalore', years: 1, text: 'Our luxury Maldives packages are now easier to sell with WeVisa handling all the documentation. Clients love the hassle-free experience.' },
-  { name: 'Lakshmi Nair', city: 'Kochi', years: 2, text: 'As a local Kerala tour operator, WeVisa has helped us bring international tourists to our state with minimal visa hassles.' },
-]
-
-const AGENCY_TESTIMONIALS = [
-  { agency: 'Travel Hub Pvt Ltd', city: 'Mumbai', text: 'Partnered with WeVisa 6 months ago. The B2B platform is excellent with competitive commission rates. Processing 50+ visas monthly now!' },
-  { agency: 'Global Tours & Travels', city: 'Delhi', text: 'Best B2B visa platform in India. CRM tools and invoice system help us manage clients efficiently. Support team is always responsive.' },
-  { agency: 'Skyways Travel Agency', city: 'Bangalore', text: 'Earning great commission on every visa. The agent dashboard makes it easy to track all applications and payments. Highly recommended!' },
-  { agency: 'Wanderlust Tours', city: 'Hyderabad', text: 'Professional B2B partner. Fast visa processing and transparent pricing. Our business has grown 40% since joining WeVisa!' },
+  { name: 'Rajiv Sharma', city: 'Mumbai', years: 3, text: 'WeVisa transformed our agency. Dubai approvals in 4 hours is truly incredible for our clients!' },
+  { name: 'Priya Patel', city: 'Delhi', years: 2, text: 'Singapore bookings up 40% since we partnered. The 24-hour processing is a genuine game-changer.' },
+  { name: 'Anand Gupta', city: 'Bangalore', years: 1, text: 'Luxury Maldives packages are now so much easier to sell. Clients love the hassle-free experience.' },
+  { name: 'Lakshmi Nair', city: 'Kochi', years: 2, text: 'WeVisa helps bring international tourists to Kerala with truly minimal visa hassle for everyone.' },
+  { name: 'Suresh Kumar', city: 'Chennai', years: 2, text: 'Best B2B platform in India. CRM tools and invoice system help us manage clients like pros.' },
+  { name: 'Meera Joshi', city: 'Pune', years: 1, text: 'Earning great commission on every visa. The agent dashboard makes tracking so simple and clear.' },
 ]
 
 const NEWS = [
-  { date: 'Apr 16, 2026', title: 'New Visa Rules for Schengen Countries in 2026', desc: 'Important changes to Schengen visa processing times and requirements that every traveler should know about.', tags: ['Schengen', 'Visa Rules', 'Europe'] },
-  { date: 'Apr 15, 2026', title: 'Top 10 Documents Needed for US Tourist Visa', desc: 'A comprehensive checklist of all documents you need to prepare for your US B1/B2 visa interview.', tags: ['USA', 'Tourist Visa', 'Documents'] },
-  { date: 'Apr 14, 2026', title: 'How to Track Your Visa Application Status Online', desc: 'Step-by-step guide to tracking your visa application status for different countries through our platform.', tags: ['Tracking', 'Guide', 'Tips'] },
+  { date: 'Apr 16, 2026', title: 'New Visa Rules for Schengen Countries in 2026', desc: 'Important changes to processing times and requirements every agent should know.', tags: ['Schengen', 'Europe'], img: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=500&q=75' },
+  { date: 'Apr 15, 2026', title: 'Top 10 Documents Needed for US Tourist Visa', desc: 'A comprehensive checklist for your clients B1/B2 visa interviews.', tags: ['USA', 'Documents'], img: 'https://images.unsplash.com/photo-1485738422979-f5c462d49f74?w=500&q=75' },
+  { date: 'Apr 14, 2026', title: 'How to Track Your Visa Application Status', desc: 'Step-by-step guide using our platform to keep clients updated in real time.', tags: ['Guide', 'Tips'], img: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=500&q=75' },
 ]
 
+const NAV_TABS = [
+  { icon: '🛂', label: 'Visa' },
+  { icon: '🎓', label: 'Student Visa' },
+  { icon: '🛡️', label: 'Travel Insurance' },
+  { icon: '✈️', label: 'OTB' },
+]
+
+function Avatar({ name, size = 42 }) {
+  const initials = name.split(' ').map(n => n[0]).join('').slice(0, 2)
+  const cols = ['#1C3FAA','#0D7377','#8B2FC9','#C0392B','#1E8449','#2471A3']
+  const bg = cols[name.charCodeAt(0) % cols.length]
+  return (
+    <div style={{ width: size, height: size, borderRadius: '50%', background: bg, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: size * 0.36, flexShrink: 0 }}>
+      {initials}
+    </div>
+  )
+}
+
 export default function WeVisaLandingPage() {
-  const [currentSlide, setCurrentSlide] = useState(0)
-  const [currentTestimonial, setCurrentTestimonial] = useState(0)
+  const [activeTab, setActiveTab] = useState(0)
+  const [searchVal, setSearchVal] = useState('')
+  const [sugg, setSugg] = useState([])
+  const [destIdx, setDestIdx] = useState(0)
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const t = setInterval(() => setDestIdx(i => (i + 1) % DESTINATIONS.length), 2400)
+    return () => clearInterval(t)
+  }, [])
+  useEffect(() => {
+    const fn = () => setScrolled(window.scrollY > 8)
+    window.addEventListener('scroll', fn)
+    return () => window.removeEventListener('scroll', fn)
+  }, [])
+  const handleSearch = v => {
+    setSearchVal(v)
+    setSugg(v ? DESTINATIONS.filter(d => d.toLowerCase().includes(v.toLowerCase())) : [])
+  }
 
   return (
-    <div className="min-h-screen bg-white text-gray-800 font-sans">
-      {/* Navbar */}
-      <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="font-extrabold text-xl text-blue-900">We<span className="text-blue-600">Visa</span></span>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300&display=swap');
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+          --cream: #F4EFE6;
+          --cream2: #EDE8DF;
+          --navy: #0F0A2E;
+          --navy2: #1A1445;
+          --accent: #2318A8;
+          --accent2: #3D30CC;
+          --orange: #F07A20;
+          --white: #FFFFFF;
+          --t1: #0F0A2E;
+          --t2: #433E6B;
+          --muted: #8A86A5;
+          --border: rgba(15,10,46,0.1);
+          --sh-sm: 0 2px 12px rgba(15,10,46,0.06);
+          --sh-md: 0 8px 36px rgba(15,10,46,0.13);
+          --sh-lg: 0 20px 72px rgba(15,10,46,0.2);
+          --pill: 100px;
+          --f: 'Plus Jakarta Sans', sans-serif;
+        }
+        html { scroll-behavior: smooth; }
+        body { font-family: var(--f); background: var(--cream); color: var(--t1); -webkit-font-smoothing: antialiased; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
+        button, input { font-family: var(--f); }
+        a { text-decoration: none; color: inherit; }
+
+        /* NAV */
+        .nav { position: sticky; top: 0; z-index: 200; background: var(--cream); transition: box-shadow .3s; }
+        .nav.up { box-shadow: 0 2px 20px rgba(15,10,46,0.08); }
+        .nav-i { max-width: 1300px; margin: 0 auto; padding: 0 32px; height: 70px; display: flex; align-items: center; gap: 20px; }
+        .logo { font-weight: 800; font-size: 22px; letter-spacing: -.5px; color: var(--navy); }
+        .logo span { color: var(--accent); }
+        .tabs { display: flex; align-items: center; gap: 8px; flex: 1; justify-content: center; }
+        .tab { display: flex; align-items: center; gap: 8px; padding: 10px 22px; border-radius: var(--pill); border: 1.5px solid var(--border); background: var(--white); font-size: 14px; font-weight: 600; color: var(--t2); cursor: pointer; transition: all .2s; white-space: nowrap; }
+        .tab:hover, .tab.on { border-color: var(--accent); color: var(--accent); background: rgba(35,24,168,.05); }
+        .tab-ic { font-size: 17px; }
+        .nr { display: flex; align-items: center; gap: 20px; white-space: nowrap; }
+        .nl { font-size: 14px; font-weight: 600; color: var(--t2); background: none; border: none; cursor: pointer; transition: color .2s; }
+        .nl:hover { color: var(--navy); }
+        .ndiv { width: 1px; height: 20px; background: var(--border); }
+        .btn-login { font-size: 14px; font-weight: 600; color: var(--t2); background: none; border: none; cursor: pointer; transition: color .2s; }
+        .btn-login:hover { color: var(--navy); }
+        .btn-reg { padding: 10px 22px; border-radius: var(--pill); background: var(--orange); color: #fff; border: none; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .2s; box-shadow: 0 4px 14px rgba(240,122,32,.3); }
+        .btn-reg:hover { background: #d96d18; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(240,122,32,.4); }
+
+        /* SEARCH */
+        .srch-wrap { max-width: 1300px; margin: 0 auto; padding: 28px 32px 0; position: relative; }
+        .srch-bar { display: flex; align-items: center; gap: 0; background: var(--white); border-radius: var(--pill); border: 1.5px solid var(--border); box-shadow: var(--sh-sm); padding: 6px 6px 6px 26px; transition: box-shadow .2s, border-color .2s; }
+        .srch-bar:focus-within { box-shadow: var(--sh-md); border-color: rgba(35,24,168,.28); }
+        .srch-inp { flex: 1; border: none; outline: none; background: transparent; font-size: 15px; font-weight: 400; color: var(--t1); }
+        .srch-inp::placeholder { color: var(--muted); }
+        .srch-btn { width: 46px; height: 46px; border-radius: 50%; background: var(--accent); border: none; color: #fff; font-size: 17px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: all .2s; }
+        .srch-btn:hover { background: var(--accent2); transform: scale(1.05); }
+        .exp-btn { padding: 12px 30px; border-radius: var(--pill); border: 2px solid var(--navy); background: transparent; font-size: 14px; font-weight: 700; color: var(--navy); margin-left: 12px; cursor: pointer; transition: all .2s; white-space: nowrap; flex-shrink: 0; position: relative; }
+        .exp-btn::before { content: '✦'; position: absolute; top: -3px; right: -2px; font-size: 11px; color: var(--accent); }
+        .exp-btn:hover { background: var(--navy); color: #fff; }
+        .sugg { position: absolute; top: calc(100% + 6px); left: 32px; right: 32px; background: #fff; border-radius: 16px; box-shadow: var(--sh-md); border: 1px solid var(--border); overflow: hidden; z-index: 500; }
+        .sugg-i { padding: 12px 22px; font-size: 14px; font-weight: 500; color: var(--t2); cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background .15s; }
+        .sugg-i:hover { background: var(--cream); }
+
+        /* HERO HEADLINE */
+        .hero { max-width: 1300px; margin: 0 auto; padding: 44px 32px 52px; text-align: center; }
+        .hero h1 { font-size: clamp(36px, 4.5vw, 58px); font-weight: 800; color: var(--navy); letter-spacing: -1.8px; line-height: 1.1; margin-bottom: 14px; }
+        .hero h1 .dest { color: var(--accent); display: inline-block; }
+        .hero-sub { font-size: 17px; color: var(--t2); font-weight: 400; }
+        .hero-sub b { color: var(--navy); font-weight: 800; }
+
+        /* SECTION */
+        .sec { padding: 64px 32px; }
+        .sec-i { max-width: 1300px; margin: 0 auto; }
+        .bg2 { background: var(--cream2); }
+        .sec-hd { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 32px; }
+        .sec-ttl { font-size: 26px; font-weight: 800; color: var(--navy); letter-spacing: -.5px; }
+        .sec-eye { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.8px; color: var(--accent); margin-bottom: 8px; }
+        .sec-lnk { font-size: 13px; font-weight: 700; color: var(--accent); background: none; border: none; cursor: pointer; transition: opacity .2s; }
+        .sec-lnk:hover { opacity: .65; }
+
+        /* TRENDING */
+        .tr-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+        .tr-card { border-radius: 22px; overflow: hidden; aspect-ratio: 3/4; position: relative; cursor: pointer; transition: transform .3s, box-shadow .3s; }
+        .tr-card:hover { transform: translateY(-7px); box-shadow: var(--sh-lg); }
+        .tr-img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s; }
+        .tr-card:hover .tr-img { transform: scale(1.07); }
+        .tr-ovl { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 38%, rgba(8,5,30,.88) 100%); }
+        .tr-badge { position: absolute; top: 14px; left: 14px; background: rgba(255,255,255,.17); backdrop-filter: blur(14px); border: 1px solid rgba(255,255,255,.24); border-radius: var(--pill); padding: 6px 14px; font-size: 12px; font-weight: 700; color: #fff; }
+        .tr-btm { position: absolute; bottom: 0; left: 0; right: 0; padding: 16px; }
+        .tr-name { font-size: 21px; font-weight: 800; color: #fff; letter-spacing: -.3px; margin-bottom: 6px; }
+        .tr-row { display: flex; align-items: center; justify-content: space-between; }
+        .tr-price { font-size: 13px; font-weight: 700; color: rgba(255,255,255,.9); }
+        .tr-proc { font-size: 11px; font-weight: 700; color: #3DFFAA; background: rgba(0,180,90,.22); padding: 3px 10px; border-radius: var(--pill); }
+        .tr-apply { width: 100%; margin-top: 10px; padding: 9px; border-radius: 9px; border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.14); backdrop-filter: blur(8px); font-family: var(--f); font-size: 12px; font-weight: 700; color: #fff; cursor: pointer; transition: background .2s; }
+        .tr-apply:hover { background: rgba(255,255,255,.26); }
+
+        /* EXPRESS */
+        .ex-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
+        .ex-card { border-radius: 18px; overflow: hidden; aspect-ratio: 2/3; position: relative; cursor: pointer; transition: all .25s; }
+        .ex-card:hover { transform: translateY(-5px); box-shadow: var(--sh-md); }
+        .ex-img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s; display: block; }
+        .ex-card:hover .ex-img { transform: scale(1.07); }
+        .ex-ovl { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 28%, rgba(8,5,30,.92) 100%); }
+        .ex-con { position: absolute; bottom: 0; left: 0; right: 0; padding: 14px; }
+        .ex-fl { font-size: 22px; margin-bottom: 6px; display: block; }
+        .ex-nm { font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 7px; }
+        .ex-pr { font-size: 11px; font-weight: 700; color: #3DFFAA; margin-bottom: 3px; }
+        .ex-st { font-size: 11px; color: rgba(255,255,255,.6); }
+
+        /* WHY STATS */
+        .why-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+        .why-card { background: var(--white); border-radius: 20px; padding: 30px 24px; border: 1.5px solid var(--border); text-align: center; transition: all .25s; }
+        .why-card:hover { box-shadow: var(--sh-md); transform: translateY(-3px); }
+        .why-ic { font-size: 34px; margin-bottom: 12px; display: block; }
+        .why-val { font-size: 34px; font-weight: 800; color: var(--accent); letter-spacing: -1.2px; margin-bottom: 4px; }
+        .why-lbl { font-size: 13px; font-weight: 600; color: var(--t2); }
+
+        /* TOOLS */
+        .tl-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+        .tl-card { background: var(--white); border-radius: 18px; padding: 24px; border: 1.5px solid var(--border); cursor: pointer; transition: all .25s; }
+        .tl-card:hover { box-shadow: var(--sh-md); border-color: rgba(35,24,168,.2); transform: translateY(-2px); }
+        .tl-ic { font-size: 28px; margin-bottom: 13px; display: block; }
+        .tl-ttl { font-size: 15px; font-weight: 800; color: var(--navy); margin-bottom: 7px; letter-spacing: -.2px; }
+        .tl-desc { font-size: 13px; color: var(--t2); line-height: 1.65; margin-bottom: 14px; }
+        .tl-cta { font-size: 12px; font-weight: 700; color: var(--accent); letter-spacing: .3px; }
+
+        /* TESTIMONIALS */
+        .ts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+        .ts-card { background: var(--white); border-radius: 20px; padding: 26px; border: 1.5px solid var(--border); transition: all .25s; }
+        .ts-card:hover { box-shadow: var(--sh-md); }
+        .ts-hd { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .ts-nm { font-size: 14px; font-weight: 700; color: var(--navy); }
+        .ts-mt { font-size: 12px; color: var(--muted); margin-top: 2px; }
+        .ts-stars { color: #F59E0B; font-size: 13px; letter-spacing: 1px; margin-bottom: 10px; }
+        .ts-txt { font-size: 13px; color: var(--t2); line-height: 1.75; font-style: italic; }
+
+        /* NEWS */
+        .nw-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .nw-card { background: var(--white); border-radius: 20px; overflow: hidden; border: 1.5px solid var(--border); cursor: pointer; transition: all .25s; }
+        .nw-card:hover { box-shadow: var(--sh-md); transform: translateY(-3px); }
+        .nw-imgw { overflow: hidden; }
+        .nw-img { width: 100%; height: 188px; object-fit: cover; display: block; transition: transform .4s; }
+        .nw-card:hover .nw-img { transform: scale(1.04); }
+        .nw-body { padding: 20px; }
+        .nw-dt { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 9px; }
+        .nw-ttl { font-size: 16px; font-weight: 800; color: var(--navy); line-height: 1.38; margin-bottom: 8px; letter-spacing: -.3px; }
+        .nw-desc { font-size: 13px; color: var(--t2); line-height: 1.65; margin-bottom: 14px; }
+        .nw-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+        .nw-tag { font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: var(--pill); background: rgba(35,24,168,.07); color: var(--accent); }
+
+        /* CTA BANNER */
+        .cta-box { background: var(--navy); border-radius: 28px; padding: 64px 56px; display: grid; grid-template-columns: 1fr auto; gap: 48px; align-items: center; position: relative; overflow: hidden; }
+        .cta-box::before { content: ''; position: absolute; width: 560px; height: 560px; border-radius: 50%; background: radial-gradient(circle, rgba(43,31,168,.5) 0%, transparent 65%); top: -240px; right: -80px; pointer-events: none; }
+        .cta-box::after { content: ''; position: absolute; width: 280px; height: 280px; border-radius: 50%; background: radial-gradient(circle, rgba(240,122,32,.22) 0%, transparent 70%); bottom: -80px; left: 220px; pointer-events: none; }
+        .cta-eye { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,.45); margin-bottom: 16px; }
+        .cta-ttl { font-size: 40px; font-weight: 800; color: #fff; letter-spacing: -1.4px; line-height: 1.15; margin-bottom: 12px; }
+        .cta-sub { font-size: 15px; color: rgba(255,255,255,.48); line-height: 1.7; }
+        .cta-acts { display: flex; flex-direction: column; gap: 12px; position: relative; z-index: 1; }
+        .btn-cp { padding: 16px 38px; border-radius: var(--pill); border: none; background: var(--accent2); color: #fff; font-family: var(--f); font-size: 14px; font-weight: 700; white-space: nowrap; cursor: pointer; transition: all .2s; box-shadow: 0 4px 20px rgba(43,31,168,.4); }
+        .btn-cp:hover { background: #5045e0; transform: translateY(-2px); }
+        .btn-cg { padding: 14px 38px; border-radius: var(--pill); border: 1.5px solid rgba(255,255,255,.2); background: transparent; color: #fff; font-family: var(--f); font-size: 14px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: all .2s; }
+        .btn-cg:hover { border-color: rgba(255,255,255,.42); background: rgba(255,255,255,.06); }
+
+        /* FOOTER */
+        .ft { background: var(--navy2); padding: 72px 32px 32px; }
+        .ft-i { max-width: 1300px; margin: 0 auto; }
+        .ft-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 52px; margin-bottom: 52px; }
+        .ft-logo { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -.5px; margin-bottom: 14px; }
+        .ft-logo span { color: #7B8FFF; }
+        .ft-about { font-size: 13px; color: rgba(255,255,255,.38); line-height: 1.85; max-width: 255px; }
+        .ft-ctitle { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,.45); margin-bottom: 20px; }
+        .ft-link { display: block; font-size: 13px; color: rgba(255,255,255,.42); margin-bottom: 13px; cursor: pointer; transition: color .2s; }
+        .ft-link:hover { color: #fff; }
+        .ft-bot { border-top: 1px solid rgba(255,255,255,.07); padding-top: 24px; display: flex; align-items: center; justify-content: space-between; }
+        .ft-copy { font-size: 12px; color: rgba(255,255,255,.28); }
+        .ft-badges { display: flex; gap: 10px; }
+        .ft-badge { font-size: 11px; font-weight: 600; padding: 5px 14px; border-radius: var(--pill); border: 1px solid rgba(255,255,255,.1); color: rgba(255,255,255,.32); }
+
+        /* MORE LINK */
+        .more { text-align: center; margin-top: 32px; }
+        .more button { background: none; border: none; font-family: var(--f); font-size: 13px; font-weight: 700; color: var(--accent); cursor: pointer; transition: opacity .2s; }
+        .more button:hover { opacity: .65; }
+
+        @media (max-width: 1080px) {
+          .tr-grid { grid-template-columns: repeat(3, 1fr); }
+          .ex-grid { grid-template-columns: repeat(3, 1fr); }
+          .tl-grid { grid-template-columns: repeat(2, 1fr); }
+          .why-grid { grid-template-columns: repeat(2, 1fr); }
+          .ts-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 700px) {
+          .tabs { display: none; }
+          .tr-grid { grid-template-columns: repeat(2, 1fr); }
+          .ts-grid { grid-template-columns: 1fr; }
+          .nw-grid { grid-template-columns: 1fr; }
+          .ft-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
+          .cta-box { grid-template-columns: 1fr; }
+          .why-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+      `}</style>
+
+      {/* NAV */}
+      <nav className={`nav${scrolled ? ' up' : ''}`}>
+        <div className="nav-i">
+          <Link to="/wevisa"><span className="logo">We<span>Visa</span></span></Link>
+          <div className="tabs">
+            {NAV_TABS.map((t, i) => (
+              <button key={t.label} className={`tab${activeTab === i ? ' on' : ''}`} onClick={() => setActiveTab(i)}>
+                <span className="tab-ic">{t.icon}</span>{t.label}
+              </button>
+            ))}
           </div>
-          <div className="flex items-center gap-8 text-sm font-medium text-gray-700">
-            <button className="hover:text-blue-600 flex items-center gap-1">Visa Services <span className="text-xs">▾</span></button>
-            <button className="hover:text-blue-600 flex items-center gap-1">Business Services <span className="text-xs">▾</span></button>
-            <button className="hover:text-blue-600 flex items-center gap-1">Travel Services <span className="text-xs">▾</span></button>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link to="/wevisa/login">
-              <button className="px-5 py-2 rounded-lg border border-gray-300 text-sm font-semibold hover:border-blue-500 hover:text-blue-600 transition-all">Agent Login</button>
-            </Link>
-            <Link to="/wevisa/register">
-              <button className="px-5 py-2 rounded-lg bg-orange-500 text-white text-sm font-semibold hover:bg-orange-600 transition-all shadow">Become a Partner</button>
-            </Link>
+          <div className="nr">
+            <button className="nl">For Business</button>
+            <div className="ndiv" />
+            <Link to="/wevisa/login"><button className="btn-login">Log In</button></Link>
+            <Link to="/wevisa/register"><button className="btn-reg">Become a Partner</button></Link>
           </div>
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="relative bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 text-white overflow-hidden">
-        <div className="absolute inset-0 bg-black/30" />
-        <div className="relative max-w-7xl mx-auto px-6 py-20">
-          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <h1 className="text-5xl font-extrabold leading-tight max-w-2xl mb-4">
-              Partner with India's Leading B2B Visa Platform
-            </h1>
-            <p className="text-lg text-blue-100 max-w-xl mb-8">
-              Exclusively for Travel Agents & Agencies - Process visas efficiently and grow your business with competitive commissions
-            </p>
-            <div className="flex gap-4 mb-12">
-              <Link to="/wevisa/register">
-                <button className="px-6 py-3 rounded-lg bg-blue-700 border-2 border-white text-white font-bold hover:bg-blue-600 transition-all">
-                  Become a Partner Agent
-                </button>
-              </Link>
-              <Link to="/wevisa/login">
-                <button className="px-6 py-3 rounded-lg bg-white text-blue-900 font-bold hover:bg-blue-50 transition-all">
-                  Agent Login
-                </button>
-              </Link>
+      {/* SEARCH */}
+      <div style={{ background: 'var(--cream)', paddingTop: 28 }}>
+        <div className="srch-wrap">
+          <motion.div className="srch-bar" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
+            <input className="srch-inp" placeholder="Search Destination" value={searchVal} onChange={e => handleSearch(e.target.value)} />
+            <button className="srch-btn">🔍</button>
+            <Link to="/wevisa/apply"><button className="exp-btn">Explore</button></Link>
+          </motion.div>
+          <AnimatePresence>
+            {sugg.length > 0 && (
+              <motion.div className="sugg" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
+                {sugg.map(s => (
+                  <div key={s} className="sugg-i" onClick={() => { setSearchVal(s); setSugg([]) }}>
+                    <span>✈️</span>{s}
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* HERO HEADLINE */}
+      <div className="hero">
+        <motion.div initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
+          <h1>
+            Get{' '}
+            <AnimatePresence mode="wait">
+              <motion.span key={destIdx} className="dest"
+                initial={{ opacity: 0, y: 20, filter: 'blur(8px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, y: -20, filter: 'blur(8px)' }}
+                transition={{ duration: 0.35 }}>
+                {DESTINATIONS[destIdx]}
+              </motion.span>
+            </AnimatePresence>
+            {' '}Visa Online
+          </h1>
+          <p className="hero-sub">With <b>99.3%</b> Approval Rate</p>
+        </motion.div>
+      </div>
+
+      {/* TRENDING */}
+      <section className="sec" style={{ paddingTop: 4 }}>
+        <div className="sec-i">
+          <div className="sec-hd">
+            <div className="sec-ttl">Trending Countries</div>
+            <button className="sec-lnk">View All Countries →</button>
+          </div>
+          <div className="tr-grid">
+            {TRENDING.map((c, i) => (
+              <motion.div key={c.name} className="tr-card"
+                initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.12 + i * 0.09, duration: 0.5 }}>
+                <img src={c.img} alt={c.name} className="tr-img" loading="lazy" />
+                <div className="tr-ovl" />
+                <div className="tr-badge">{c.count} Visas Processed</div>
+                <div className="tr-btm">
+                  <div className="tr-name">{c.flag} {c.name}</div>
+                  <div className="tr-row">
+                    <span className="tr-price">From {c.price}</span>
+                    <span className="tr-proc">{c.processing}</span>
+                  </div>
+                  <button className="tr-apply">Apply Now</button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* EXPRESS */}
+      <section className="sec bg2">
+        <div className="sec-i">
+          <div className="sec-hd">
+            <div>
+              <div className="sec-eye">⚡ Fast Track</div>
+              <div className="sec-ttl">Express Visa Processing</div>
             </div>
-            {/* Stats */}
-            <div className="bg-white text-gray-800 rounded-2xl p-6 inline-flex gap-12 shadow-xl">
-              <div><div className="text-2xl font-extrabold text-blue-900">₹500+</div><div className="text-sm text-gray-500">Per Visa</div></div>
-              <div className="border-l border-gray-200 pl-12"><div className="text-2xl font-extrabold text-blue-900">24/7</div><div className="text-sm text-gray-500">Support</div></div>
-              <div className="border-l border-gray-200 pl-12"><div className="text-2xl font-extrabold text-blue-900">100+</div><div className="text-sm text-gray-500">Countries</div></div>
+            <button className="sec-lnk">View All →</button>
+          </div>
+          <div className="ex-grid">
+            {EXPRESS.map((v, i) => (
+              <motion.div key={v.country} className="ex-card"
+                initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }} transition={{ delay: i * 0.07, duration: 0.4 }}>
+                <img src={v.img} alt={v.country} className="ex-img" loading="lazy" />
+                <div className="ex-ovl" />
+                <div className="ex-con">
+                  <span className="ex-fl">{v.flag}</span>
+                  <div className="ex-nm">{v.country}</div>
+                  <div className="ex-pr">⚡ {v.processing}</div>
+                  <div className="ex-st">Stay: {v.stay}</div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* WHY STATS */}
+      <section className="sec">
+        <div className="sec-i">
+          <div className="sec-hd">
+            <div>
+              <div className="sec-eye">Why WeVisa</div>
+              <div className="sec-ttl">Trusted by 1000+ Travel Agents</div>
+            </div>
+          </div>
+          <div className="why-grid">
+            {[
+              { ic: '💰', val: '₹500+', lbl: 'Commission per visa' },
+              { ic: '🌍', val: '100+', lbl: 'Countries covered' },
+              { ic: '🤝', val: '1000+', lbl: 'Partner agents' },
+              { ic: '✅', val: '99.3%', lbl: 'Approval rate' },
+            ].map((w, i) => (
+              <motion.div key={w.lbl} className="why-card"
+                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ delay: i * 0.09, duration: 0.45 }}>
+                <span className="why-ic">{w.ic}</span>
+                <div className="why-val">{w.val}</div>
+                <div className="why-lbl">{w.lbl}</div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TOOLS */}
+      <section className="sec bg2">
+        <div className="sec-i">
+          <div className="sec-hd">
+            <div>
+              <div className="sec-eye">Agent Platform</div>
+              <div className="sec-ttl">Business Tools for Travel Agents</div>
+            </div>
+          </div>
+          <div className="tl-grid">
+            {TOOLS.map((t, i) => (
+              <motion.div key={t.title} className="tl-card"
+                initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ delay: i * 0.06, duration: 0.4 }}>
+                <span className="tl-ic">{t.icon}</span>
+                <div className="tl-ttl">{t.title}</div>
+                <div className="tl-desc">{t.desc}</div>
+                <Link to={t.path}><div className="tl-cta">Get Started →</div></Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIALS */}
+      <section className="sec">
+        <div className="sec-i">
+          <div className="sec-hd">
+            <div>
+              <div className="sec-eye">Reviews</div>
+              <div className="sec-ttl">What Our Partners Say</div>
+            </div>
+          </div>
+          <div className="ts-grid">
+            {TESTIMONIALS.map((t, i) => (
+              <motion.div key={t.name} className="ts-card"
+                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ delay: i * 0.07, duration: 0.45 }}>
+                <div className="ts-hd">
+                  <Avatar name={t.name} />
+                  <div>
+                    <div className="ts-nm">{t.name}</div>
+                    <div className="ts-mt">{t.city} · {t.years}yr partner</div>
+                  </div>
+                </div>
+                <div className="ts-stars">★★★★★</div>
+                <div className="ts-txt">"{t.text}"</div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* NEWS */}
+      <section className="sec bg2">
+        <div className="sec-i">
+          <div className="sec-hd">
+            <div>
+              <div className="sec-eye">Updates</div>
+              <div className="sec-ttl">Latest Visa News & Articles</div>
+            </div>
+            <button className="sec-lnk">View All →</button>
+          </div>
+          <div className="nw-grid">
+            {NEWS.map((n, i) => (
+              <motion.div key={n.title} className="nw-card"
+                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.45 }}>
+                <div className="nw-imgw"><img src={n.img} alt={n.title} className="nw-img" loading="lazy" /></div>
+                <div className="nw-body">
+                  <div className="nw-dt">{n.date}</div>
+                  <div className="nw-ttl">{n.title}</div>
+                  <div className="nw-desc">{n.desc}</div>
+                  <div className="nw-tags">{n.tags.map(tag => <span key={tag} className="nw-tag">{tag}</span>)}</div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="sec">
+        <div className="sec-i">
+          <motion.div className="cta-box"
+            initial={{ opacity: 0, y: 32 }} whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }} transition={{ duration: 0.6 }}>
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div className="cta-eye">Join WeVisa Today</div>
+              <div className="cta-ttl">Ready to grow your<br />travel business?</div>
+              <div className="cta-sub">Partner with India's most trusted B2B visa platform.<br />Start earning commissions from day one.</div>
+            </div>
+            <div className="cta-acts">
+              <Link to="/wevisa/register"><button className="btn-cp">Become a Partner Agent</button></Link>
+              <Link to="/wevisa/login"><button className="btn-cg">Agent Login</button></Link>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Countries Slider */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Explore all countries</h2>
-          <div className="grid grid-cols-3 gap-6 mb-6">
-            {COUNTRIES.map((c, i) => (
-              <motion.div key={c.name} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
-                className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all cursor-pointer">
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="text-3xl">{c.flag}</span>
-                  <div>
-                    <div className="font-bold text-gray-800">{c.name}</div>
-                    {c.packages > 0 && <div className="text-xs text-gray-400">{c.packages} package{c.packages > 1 ? 's' : ''}</div>}
-                  </div>
-                </div>
-                <p className="text-sm text-gray-500 mb-4">{c.desc}</p>
-                {c.price && <div className="text-blue-600 font-semibold text-sm mb-3">From {c.price}</div>}
-                <button className="w-full py-2 rounded-lg border border-blue-500 text-blue-600 text-sm font-semibold hover:bg-blue-50 transition-all">
-                  View Visa Details
-                </button>
-              </motion.div>
-            ))}
-          </div>
-          <div className="text-center">
-            <button className="text-blue-600 font-semibold text-sm hover:underline">View All 3 Countries →</button>
-          </div>
-        </div>
-      </section>
-
-      {/* Express Visas */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-yellow-500 text-xl">⚡</span>
-            <h2 className="text-2xl font-bold text-gray-800">Express Visas for Your Clients</h2>
-          </div>
-          <p className="text-gray-500 mb-8">Process visas quickly and earn commission on every application</p>
-          <div className="grid grid-cols-5 gap-4">
-            {EXPRESS_VISAS.map((v, i) => (
-              <motion.div key={v.country} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
-                className="bg-gray-50 rounded-2xl p-5 border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all">
-                <div className="text-2xl mb-2">{v.flag}</div>
-                <div className="font-bold text-gray-800 mb-3">{v.country}</div>
-                <div className="space-y-1.5 text-xs text-gray-500 mb-4">
-                  <div className="flex justify-between"><span>Visa Type</span><span className="font-semibold text-gray-700">{v.type}</span></div>
-                  <div className="flex justify-between"><span>Processing</span><span className="font-semibold text-green-600">{v.processing}</span></div>
-                  <div className="flex justify-between"><span>Stay</span><span className="font-semibold text-gray-700">{v.stay}</span></div>
-                </div>
-                <button className="w-full py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-all">Apply Now</button>
-              </motion.div>
-            ))}
-          </div>
-          <div className="text-center mt-6">
-            <button className="text-blue-600 font-semibold text-sm hover:underline">View All Countries →</button>
-          </div>
-        </div>
-      </section>
-
-      {/* Business Tools */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Business Tools for Travel Agents</h2>
-          <p className="text-gray-500 mb-8">Complete toolkit to manage your travel agency business efficiently - from CRM to invoicing and marketing materials.</p>
-          <div className="grid grid-cols-4 gap-5">
-            {BUSINESS_TOOLS.map((t, i) => (
-              <motion.div key={t.title} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.07 }}
-                className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all cursor-pointer group">
-                <div className="text-3xl mb-3">{t.icon}</div>
-                <div className="font-bold text-gray-800 mb-2">{t.title}</div>
-                <p className="text-sm text-gray-500 mb-4">{t.desc}</p>
-                <button className="text-blue-600 text-sm font-semibold group-hover:underline">Get Started →</button>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Why Choose WeVisa */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xl">🤝</span>
-            <h2 className="text-2xl font-bold text-gray-800">Why Travel Agents Choose WeVisa</h2>
-          </div>
-          <p className="text-gray-500 mb-8">Join 1000+ travel agent partners across India who trust WeVisa for fast, reliable B2B visa services with excellent commission structure.</p>
-          <div className="grid grid-cols-4 gap-5">
-            {TESTIMONIALS.map((t, i) => (
-              <div key={t.name} className="bg-gray-50 rounded-2xl p-5 border border-gray-100">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700">
-                    {t.name.split(' ').map(n => n[0]).join('')}
-                  </div>
-                  <div>
-                    <div className="font-bold text-sm text-gray-800">{t.name}</div>
-                    <div className="text-xs text-gray-400">{t.city} · Partner for {t.years} year{t.years > 1 ? 's' : ''}</div>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600 leading-relaxed">{t.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Agency Testimonials */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xl">💬</span>
-            <h2 className="text-2xl font-bold text-gray-800">What Travel Agents Say About Us</h2>
-          </div>
-          <div className="grid grid-cols-3 gap-5 mt-8">
-            {AGENCY_TESTIMONIALS.slice(0, 3).map((t, i) => (
-              <div key={t.agency} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white text-sm">
-                    {t.agency[0]}
-                  </div>
-                  <div>
-                    <div className="font-bold text-sm text-gray-800">{t.agency}</div>
-                    <div className="text-xs text-gray-400">{t.city}</div>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600 leading-relaxed">"{t.text}"</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* News */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center justify-between mb-8">
+      {/* FOOTER */}
+      <footer className="ft">
+        <div className="ft-i">
+          <div className="ft-grid">
             <div>
-              <div className="text-xs font-semibold text-blue-600 uppercase tracking-widest mb-1">New Updates</div>
-              <h2 className="text-2xl font-bold text-gray-800">Latest News & Articles</h2>
-              <p className="text-gray-500 text-sm mt-1">Stay informed with the latest visa news, travel tips, and important updates from our team.</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-6">
-            {NEWS.map((n, i) => (
-              <div key={n.title} className="bg-gray-50 rounded-2xl p-6 border border-gray-100 hover:shadow-md transition-all cursor-pointer">
-                <div className="text-xs text-gray-400 mb-2">{n.date}</div>
-                <h3 className="font-bold text-gray-800 mb-2 leading-snug">{n.title}</h3>
-                <p className="text-sm text-gray-500 mb-4">{n.desc}</p>
-                <div className="flex flex-wrap gap-2">
-                  {n.tags.map(tag => (
-                    <span key={tag} className="text-xs px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 font-medium border border-blue-100">{tag}</span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="text-center mt-6">
-            <button className="text-blue-600 font-semibold text-sm hover:underline">View All Updates →</button>
-          </div>
-        </div>
-      </section>
-
-      {/* Invoice CTA */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-10">
-            <div className="flex items-start gap-2 mb-2">
-              <span className="text-xl">🧾</span>
-              <h2 className="text-2xl font-bold text-gray-800">Advanced Invoice & Purchase Management</h2>
-            </div>
-            <p className="text-gray-500 mb-8">Create professional invoices with our enhanced platform designed specifically for travel agents.</p>
-            <div className="grid grid-cols-4 gap-6 mb-8">
-              {[
-                { icon: '📋', title: 'GST-Compliant Invoicing', desc: 'Create invoices with service charge and GST calculations that comply with tax regulations.' },
-                { icon: '🛒', title: 'Purchase Management', desc: 'Track purchases and link them to invoices for complete financial visibility.' },
-                { icon: '💰', title: 'Profit Calculation', desc: 'Automatically calculate profits by comparing sales and purchase amounts.' },
-                { icon: '💳', title: 'Advanced Payment Tracking', desc: 'Track invoices with statuses: Paid, Unpaid, Partially Paid, Refunded, and Overdue.' },
-              ].map(item => (
-                <div key={item.title} className="flex gap-3">
-                  <span className="text-2xl">{item.icon}</span>
-                  <div>
-                    <div className="font-semibold text-gray-800 text-sm mb-1">{item.title}</div>
-                    <p className="text-xs text-gray-500">{item.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <Link to="/wevisa/invoice">
-              <button className="px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-all shadow">
-                Open Invoice Dashboard →
-              </button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-100 py-12">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-4 gap-8">
-            <div>
-              <div className="font-extrabold text-xl text-blue-900 mb-3">We<span className="text-blue-600">Visa</span></div>
-              <p className="text-sm text-gray-500">Your trusted B2B partner for visa services - exclusively for travel agents and agencies</p>
+              <div className="ft-logo">We<span>Visa</span></div>
+              <p className="ft-about">Your trusted B2B partner for visa services — exclusively for travel agents and agencies across India.</p>
             </div>
             <div>
-              <div className="font-bold text-gray-800 mb-3">For Agents</div>
-              <div className="space-y-2 text-sm text-gray-500">
-                <div className="hover:text-blue-600 cursor-pointer">Become a Partner</div>
-                <div className="hover:text-blue-600 cursor-pointer">Agent Login</div>
-                <div className="hover:text-blue-600 cursor-pointer">Countries We Serve</div>
-                <div className="hover:text-blue-600 cursor-pointer">CRM Dashboard</div>
-              </div>
+              <div className="ft-ctitle">For Agents</div>
+              <Link to="/wevisa/register"><span className="ft-link">Become a Partner</span></Link>
+              <Link to="/wevisa/login"><span className="ft-link">Agent Login</span></Link>
+              <span className="ft-link">Countries We Serve</span>
+              <Link to="/wevisa/crm"><span className="ft-link">CRM Dashboard</span></Link>
+              <span className="ft-link">Commission Structure</span>
             </div>
             <div>
-              <div className="font-bold text-gray-800 mb-3">Support</div>
-              <div className="space-y-2 text-sm text-gray-500">
-                <div className="hover:text-blue-600 cursor-pointer">Agent Help Center</div>
-                <div className="hover:text-blue-600 cursor-pointer">Contact Support</div>
-                <div className="hover:text-blue-600 cursor-pointer">Commission Structure</div>
-                <div className="hover:text-blue-600 cursor-pointer">Track Applications</div>
-              </div>
+              <div className="ft-ctitle">Support</div>
+              <span className="ft-link">Agent Help Center</span>
+              <span className="ft-link">Contact Support</span>
+              <span className="ft-link">Track Applications</span>
+              <span className="ft-link">API Documentation</span>
             </div>
             <div>
-              <div className="font-bold text-gray-800 mb-3">Contact Us</div>
-              <div className="space-y-2 text-sm text-gray-500">
-                <div>Western Entertainers LLP</div>
-                <div>Email: contact@wevisa.com</div>
-                <div>Phone: +91 XXXXXXXXXX</div>
-              </div>
+              <div className="ft-ctitle">Contact</div>
+              <span className="ft-link">Western Entertainers LLP</span>
+              <span className="ft-link">contact@wevisa.com</span>
+              <span className="ft-link">+91 XXXXXXXXXX</span>
             </div>
           </div>
-          <div className="mt-8 pt-6 border-t border-gray-100 text-center text-xs text-gray-400">
-            © 2026 WeVisa. All rights reserved. Powered by Western Entertainers LLP
+          <div className="ft-bot">
+            <div className="ft-copy">© 2026 WeVisa · Powered by Western Entertainers LLP</div>
+            <div className="ft-badges">
+              <span className="ft-badge">ISO Certified</span>
+              <span className="ft-badge">IATA Member</span>
+              <span className="ft-badge">GDPR Compliant</span>
+            </div>
           </div>
         </div>
       </footer>
-    </div>
+    </>
   )
 }
