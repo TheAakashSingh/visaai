@@ -259,12 +259,12 @@ export default function WeVisaManagePage() {
     onSuccess: ()=>{ qc.invalidateQueries(['admin-usa-pricing']); qc.invalidateQueries(['landing-usa-pricing']); toast.success('USA pricing updated! Changes reflect on landing page.') },
   })
   const seedData = useMutation({
-    mutationFn: ()=>adminApi.post('/seed'),
+    mutationFn: ()=>wevisaAdminAPI.seedData(),
     onSuccess: (res)=>{
       qc.invalidateQueries(['admin-countries']);
       qc.invalidateQueries(['admin-packages']);
       qc.invalidateQueries(['admin-wv-stats']);
-      toast.success(`✅ Seeded ${res.data.countries} countries & ${res.data.packages} packages!`);
+      toast.success(`✅ Seeded ${res.data.data.countries} countries & ${res.data.data.packages} packages!`);
     },
   })
 
