@@ -9,28 +9,29 @@ import useAuthStore from '@/store/authStore'
 import useUIStore from '@/store/uiStore'
 import { getSocket } from '@/services/socket'
 
+const BASE = '/dashboard'
 const NAV = [
   // ── VisaAI Pro CRM ──
-  { path: '/', label: 'Dashboard', icon: '⚡', exact: true },
+  { path: BASE, label: 'Dashboard', icon: '⚡', exact: true },
   null,
-  { path: '/leads',    label: 'Leads',    icon: '👥', badge: 'leads' },
-  { path: '/contacts', label: 'Contacts', icon: '📒' },
-  { path: '/deals',    label: 'Deals',    icon: '💼' },
-  { path: '/calendar', label: 'Calendar', icon: '📅' },
-  { path: '/crm',      label: 'CRM',      icon: '🔗' },
+  { path: `${BASE}/leads`,    label: 'Leads',    icon: '👥', badge: 'leads' },
+  { path: `${BASE}/contacts`, label: 'Contacts', icon: '📒' },
+  { path: `${BASE}/deals`,    label: 'Deals',    icon: '💼' },
+  { path: `${BASE}/calendar`, label: 'Calendar', icon: '📅' },
+  { path: `${BASE}/crm`,      label: 'CRM',      icon: '🔗' },
   null,
   // ── AI Tools ──
-  { path: '/chatbot',      label: 'WhatsApp Bot',   icon: '💬', badge: 'live' },
-  { path: '/voice',        label: 'Voice Bot',      icon: '📞' },
-  { path: '/ocr',          label: 'Document OCR',   icon: '🔍' },
-  { path: '/ai-assistant', label: 'AI Assistant',   icon: '🤖' },
-  { path: '/knowledge',    label: 'Knowledge Base', icon: '📚' },
-  { path: '/analytics',    label: 'Analytics',      icon: '📊' },
+  { path: `${BASE}/chatbot`,      label: 'WhatsApp Bot',   icon: '💬', badge: 'live' },
+  { path: `${BASE}/voice`,        label: 'Voice Bot',      icon: '📞' },
+  { path: `${BASE}/ocr`,          label: 'Document OCR',   icon: '🔍' },
+  { path: `${BASE}/ai-assistant`, label: 'AI Assistant',   icon: '🤖' },
+  { path: `${BASE}/knowledge`,    label: 'Knowledge Base', icon: '📚' },
+  { path: `${BASE}/analytics`,    label: 'Analytics',      icon: '📊' },
   null,
   // ── WeVisa B2B Manage ──
-  { path: '/wevisa-manage', label: 'WeVisa Manage', icon: '🌐', section: 'WeVisa Platform' },
+  { path: `${BASE}/wevisa-manage`, label: 'WeVisa Manage', icon: '🌐', section: 'WeVisa Platform' },
   null,
-  { path: '/settings', label: 'Settings', icon: '⚙️' },
+  { path: `${BASE}/settings`, label: 'Settings', icon: '⚙️' },
 ]
 
 export default function DashboardLayout() {
@@ -87,8 +88,8 @@ export default function DashboardLayout() {
                   <div className="px-6 pt-1 pb-1">
                     <span className="text-[9px] font-bold text-[var(--text3)] uppercase tracking-widest">{item.section}</span>
                   </div>
-                  <NavLink to={item.path} className={clsx('nav-item', location.pathname.startsWith(item.path) && 'active')}>
-                    {location.pathname.startsWith(item.path) && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-blue-400 rounded-r" />}
+                  <NavLink to={item.path} end className={clsx('nav-item', location.pathname === item.path && 'active')}>
+                    {location.pathname === item.path && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-blue-400 rounded-r" />}
                     <span className="text-base w-5 text-center flex-shrink-0">{item.icon}</span>
                     <span className="flex-1">{item.label}</span>
                     <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 font-bold">Manage</span>
@@ -99,9 +100,9 @@ export default function DashboardLayout() {
 
             const isActive = item.exact
               ? location.pathname === item.path
-              : location.pathname.startsWith(item.path)
+              : location.pathname === item.path
             return (
-              <NavLink key={item.path} to={item.path} className={clsx('nav-item', isActive && 'active')}>
+              <NavLink key={item.path} to={item.path} end className={clsx('nav-item', isActive && 'active')}>
                 {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-[var(--red)] rounded-r" />}
                 <span className="text-base w-5 text-center flex-shrink-0">{item.icon}</span>
                 <span className="flex-1">{item.label}</span>
