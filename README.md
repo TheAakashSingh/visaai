@@ -1,5 +1,6 @@
 # VisaAI Pro — Complete Production Codebase
 
+
 ## Stack
 - **Frontend**: React 18 + Vite + Zustand + Framer Motion + Recharts + TailwindCSS
 - **Backend**: Node.js + Express + MongoDB (Mongoose) + Socket.IO + JWT
