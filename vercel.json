@@ -5,12 +5,27 @@
             "framework": "vite"
         },
         "backend": {
-            "root": "backend"
+            "root": "backend",
+            "entrypoint": "server.js"
         }
     },
     "rewrites": [
         {
             "source": "/api(/.*)?",
+            "destination": {
+                "type": "service",
+                "service": "backend"
+            }
+        },
+        {
+            "source": "/webhooks(/.*)?",
+            "destination": {
+                "type": "service",
+                "service": "backend"
+            }
+        },
+        {
+            "source": "/health",
             "destination": {
                 "type": "service",
                 "service": "backend"

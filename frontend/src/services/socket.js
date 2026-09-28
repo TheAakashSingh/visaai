@@ -1,12 +1,14 @@
 // src/services/socket.js
 import { io } from 'socket.io-client'
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001'
+// Vercel functions can't hold websockets: in production, live updates need VITE_SOCKET_URL
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || (import.meta.env.PROD ? null : 'http://localhost:3001')
 
 let socket = null
 
 export const initSocket = (userId) => {
   if (socket?.connected) return socket
+  if (!SOCKET_URL) return null
 
   socket = io(SOCKET_URL, {
     transports: ['websocket', 'polling'],

@@ -35,6 +35,15 @@ const io = new Server(server, {
 app.set('io', io);
 socketHandler(io);
 
+// On Vercel each request may hit a fresh instance: connect lazily, once per instance.
+const IS_VERCEL = !!process.env.VERCEL;
+let readyPromise;
+const ensureReady = () => (readyPromise ||= Promise.all([connectDB(), connectRedis()]).catch((err) => { readyPromise = null; throw err; }));
+if (IS_VERCEL) {
+  app.set('trust proxy', 1);
+  app.use((req, res, next) => ensureReady().then(() => next(), next));
+}
+
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(compression());
 app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173', credentials: true }));
@@ -84,5 +93,10 @@ async function start() {
     process.exit(1);
   }
 }
-start();
-module.exports = { app, server, io };
+if (IS_VERCEL) {
+  // Vercel runs the exported Express app as a function (no listen, no websockets)
+  module.exports = app;
+} else {
+  start();
+  module.exports = { app, server, io };
+}

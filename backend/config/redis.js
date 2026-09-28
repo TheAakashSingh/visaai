@@ -5,6 +5,7 @@ let redisClient;
 
 const connectRedis = async () => {
   try {
+    if (!process.env.REDIS_URL && process.env.VERCEL) throw new Error('REDIS_URL not set');
     redisClient = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
       maxRetriesPerRequest: 3,
       enableReadyCheck: true,
